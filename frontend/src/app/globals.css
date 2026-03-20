@@ -1,0 +1,80 @@
+@import url("https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap");
+
+@import "tailwindcss";
+
+@theme {
+  --breakpoint-sm: 576px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 992px;
+  --breakpoint-xl: 1200px;
+  --breakpoint-2xl: 1200px;
+
+  --color-primary: #0088ff;
+}
+
+* {
+  font-family: "Lexend", sans-serif;
+}
+
+svg {
+  display: inline-block;
+}
+
+/* Contain */
+.contain {
+  width: 1184px;
+  margin: 0 auto;
+}
+
+@media (max-width: 1199.98px) {
+  /* Máy tính cỡ nhỏ */
+  .contain {
+    width: 960px;
+  }
+}
+
+@media (max-width: 991.98px) {
+  /* Màn hình máy tính bảng cỡ lớn */
+  .contain {
+    width: 720px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  /* Màn hình máy tính bảng cỡ nhỏ */
+  .contain {
+    width: 540px;
+  }
+}
+
+@media (max-width: 575.98px) {
+  /* Màn hình điện thoại */
+  .contain {
+    width: 100%;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+/* End Contain */
+
+select,
+input,
+button,
+textarea {
+  outline: none;
+}
+
+/* card-item */
+.card-item {
+  background-image: linear-gradient(180deg, #f6f6f6 2.38%, #ffffff 70.43%);
+}
+
+.card-item .inner-image {
+  box-shadow: 0px 4px 24px 0px #0000001f;
+}
+/* End card-item */
+
+.just-validate-error-label {
+  font-size: 11px;
+  margin-top: 4px;
+}
