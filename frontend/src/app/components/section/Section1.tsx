@@ -1,14 +1,27 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+"use client";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FaMagnifyingGlass } from "react-icons/fa6";
 
 export const Section1 = () => {
+  const router = useRouter();
+
+  const handleSearch = (event: any) => {
+    event.preventDefault();
+    const city = event.target.city.value;
+    const keyword = event.target.keyword.value;
+    router.push(`/search?city=${city}&keyword=${keyword}`);
+  };
+
   return (
     <>
       <div className="bg-[#000065] py-[60px]">
         <div className="contain">
           <h1 className="font-[700] text-[28px] text-white mb-[30px] text-center">887 Việc làm IT cho Developer &quot;Chất&quot;</h1>
-          <form action="" className="flex gap-x-[15px] gap-y-[12px] mb-[30px] md:flex-nowrap flex-wrap">
-            <select className="md:w-[240px] w-[100%] h-[56px] rounded-[4px] px-[20px] font-[500] text-[16px] text-[#121212] bg-white">
+          <form onSubmit={handleSearch} className="flex gap-x-[15px] gap-y-[12px] mb-[30px] md:flex-nowrap flex-wrap">
+            <select name="city" className="md:w-[240px] w-[100%] h-[56px] rounded-[4px] px-[20px] font-[500] text-[16px] text-[#121212] bg-white">
+              {" "}
               <option value="">Tất cả</option>
               <option value="">Hà Nội</option>
               <option value="">Đà Nẵng</option>

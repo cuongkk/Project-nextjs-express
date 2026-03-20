@@ -44,7 +44,7 @@ export const FormLogin = () => {
   return (
     <>
       <Toaster richColors position="top-right" />
-      <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 gap-y-[15px]" id="loginForm">
+      <form onSubmit={handleSubmit(onSubmit) as any} className="grid grid-cols-1 gap-y-[15px]" id="loginForm">
         <div className="">
           <label htmlFor="email" className="block font-[500] text-[14px] text-black mb-[5px]">
             Email *

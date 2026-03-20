@@ -43,7 +43,7 @@ export const FormRegister = () => {
   return (
     <>
       <Toaster richColors position="top-right" />
-      <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 gap-y-[15px]" id="formRegister">
+      <form onSubmit={handleSubmit(onSubmit) as any} className="grid grid-cols-1 gap-y-[15px]" id="formRegister">
         <div className="">
           <label htmlFor="fullName" className="block font-[500] text-[14px] text-black mb-[5px]">
             Họ tên *

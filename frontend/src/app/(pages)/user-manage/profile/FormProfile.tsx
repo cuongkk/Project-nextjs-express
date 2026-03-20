@@ -22,7 +22,6 @@ export const FormProfile = () => {
     formState: { errors },
   } = useForm();
 
-  // set default data
   useEffect(() => {
     if (!infoUser) return;
 
@@ -54,7 +53,10 @@ export const FormProfile = () => {
       .then((res) => res.json())
       .then((data) => {
         if (data.code === "error") toast.error(data.message);
-        if (data.code === "success") toast.success(data.message);
+        if (data.code === "success") {
+          toast.success(data.message);
+          window.location.reload();
+        }
       });
   };
 
@@ -63,7 +65,7 @@ export const FormProfile = () => {
       <Toaster richColors position="top-right" />
 
       {infoUser && (
-        <form onSubmit={handleSubmit(onSubmit)} className="grid sm:grid-cols-2 grid-cols-1 gap-x-[20px] gap-y-[15px]">
+        <form onSubmit={handleSubmit(onSubmit) as any} className="grid sm:grid-cols-2 grid-cols-1 gap-x-[20px] gap-y-[15px]">
           {/* Full name */}
           <div className="sm:col-span-2">
             <label className="block mb-[5px]">Họ tên *</label>

@@ -51,22 +51,22 @@ export const HeaderAccount = () => {
           {/* Đã đăng nhập tài khoản company */}
           {infoCompany && (
             <div className="font-[600] sm:text-[16px] text-[12px] text-white relative group/sub-1">
-              <Link className="" href="company-manage/profile">
+              <Link className="" href="/company-manage/profile">
                 {infoCompany.companyName}
               </Link>
               <ul className="bg-[#000065] rounded-[4px] absolute top-[100%] right-0 w-[200px] hidden group-hover/sub-1:block">
                 <li className="py-[10px] px-[16px] flex items-center justify-between hover:bg-[#000096] rounded-[4px] group/sub-2">
-                  <Link className="font-[600] text-[16px] text-white" href="company-manage/profile">
+                  <Link className="font-[600] text-[16px] text-white" href="/company-manage/profile">
                     Thông tin công ty
                   </Link>
                 </li>
                 <li className="py-[10px] px-[16px] flex items-center justify-between hover:bg-[#000096] rounded-[4px] group/sub-2">
-                  <Link className="font-[600] text-[16px] text-white" href="company-manage/job/list">
+                  <Link className="font-[600] text-[16px] text-white" href="/company-manage/job/list">
                     Quản lý công việc
                   </Link>
                 </li>
                 <li className="py-[10px] px-[16px] flex items-center justify-between hover:bg-[#000096] rounded-[4px] group/sub-2">
-                  <Link className="font-[600] text-[16px] text-white" href="company-manage/cv/list">
+                  <Link className="font-[600] text-[16px] text-white" href="/company-manage/cv/list">
                     Quản lý CV
                   </Link>
                 </li>
