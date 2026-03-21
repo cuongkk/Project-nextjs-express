@@ -5,6 +5,8 @@ import City from "../models/city.model";
 
 export const search = async (req: Request, res: Response) => {
   const dataFinal = [];
+  let totalRecord = 0;
+  let totalPage = 1;
 
   if (Object.keys(req.query).length > 0) {
     const find: any = {};
@@ -13,9 +15,59 @@ export const search = async (req: Request, res: Response) => {
       find.technologies = req.query.language;
     }
 
-    const jobs = await Job.find(find).sort({
-      createdAt: "desc",
-    });
+    if (req.query.city) {
+      const city = await City.findOne({
+        name: req.query.city,
+      });
+
+      if (city) {
+        const listAccountCompanyInCity = await AccountCompany.find({
+          city: city.id,
+        });
+
+        find.companyId = {
+          $in: listAccountCompanyInCity.map((item) => item.id),
+        };
+      }
+    }
+
+    if (req.query.company) {
+      const accountCompany = await AccountCompany.findOne({
+        companyName: req.query.company,
+      });
+      find.companyId = accountCompany?.id;
+    }
+
+    if (req.query.keyword) {
+      const keywordRegex = new RegExp(`${req.query.keyword}`, "i");
+      find.title = keywordRegex;
+    }
+
+    if (req.query.position) {
+      find.position = req.query.position;
+    }
+
+    if (req.query.workingForm) {
+      find.workingForm = req.query.workingForm;
+    }
+
+    // Phân trang
+    const limitItems = 2;
+    let page = 1;
+    if (req.query.page) {
+      page = parseInt(`${req.query.page}`);
+    }
+    totalRecord = await Job.countDocuments(find);
+    totalPage = Math.ceil(totalRecord / limitItems);
+    const skip = (page - 1) * limitItems;
+    // Hết Phân trang
+
+    const jobs = await Job.find(find)
+      .sort({
+        createdAt: "desc",
+      })
+      .limit(limitItems)
+      .skip(skip);
 
     for (const item of jobs) {
       const itemFinal = {
@@ -52,5 +104,7 @@ export const search = async (req: Request, res: Response) => {
     code: "success",
     message: "Thành công!",
     jobs: dataFinal,
+    totalPage: totalPage,
+    totalRecord: totalRecord,
   });
 };

@@ -27,7 +27,7 @@ export const JobItem = (props: { item: any }) => {
           </h3>
           <div className="font-[400] text-[14px] text-[#121212] mb-[12px] text-center">{item.companyName}</div>
           <div className="font-[600] text-[16px] text-primary mb-[6px] text-center">
-            {item.salaryMin.toLocaleString("")}$ - {item.salaryMax.toLocaleString("")}$
+            {item.salaryMin.toLocaleString("vi-VN")}$ - {item.salaryMax.toLocaleString("vi-VN")}$
           </div>
           <div className="font-[400] text-[14px] text-[#121212] mb-[6px] text-center">
             <FaUserTie className="text-[16px] mr-[4px]" /> {position?.label}

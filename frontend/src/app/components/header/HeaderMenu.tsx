@@ -58,7 +58,7 @@ export const HeaderMenu = (props: { showMenu: boolean }) => {
     },
     {
       name: "Top Công Ty IT",
-      link: "#",
+      link: "/company/list",
       isLogin: undefined,
 
       children: [

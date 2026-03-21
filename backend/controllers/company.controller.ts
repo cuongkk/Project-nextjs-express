@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import { AccountRequest } from "../interfaces/request.interface";
 import Job from "../models/job.model";
 import City from "../models/city.model";
+import CV from "../models/cv.model";
 
 export const registerPost = async (req: Request, res: Response) => {
   const { companyName, email, password } = req.body;
@@ -308,12 +309,29 @@ export const deleteJobDel = async (req: AccountRequest, res: Response) => {
 };
 
 export const list = async (req: AccountRequest, res: Response) => {
+  const find: any = {};
+
   let limitItems = 12;
   if (req.query.limitItems) {
     limitItems = parseInt(`${req.query.limitItems}`);
   }
 
-  const companyList = await AccountCompany.find({}).limit(limitItems);
+  // Phân trang
+  let page = 1;
+  if (req.query.page) {
+    page = parseInt(`${req.query.page}`);
+  }
+  const totalRecord = await AccountCompany.countDocuments(find);
+  const totalPage = Math.ceil(totalRecord / limitItems);
+  const skip = (page - 1) * limitItems;
+  // Hết Phân trang
+
+  const companyList = await AccountCompany.find(find)
+    .sort({
+      createdAt: "desc",
+    })
+    .limit(limitItems)
+    .skip(skip);
 
   const companyListFinal = [];
 
@@ -346,5 +364,316 @@ export const list = async (req: AccountRequest, res: Response) => {
     code: "success",
     message: "Thành công!",
     companyList: companyListFinal,
+    totalPage: totalPage,
   });
+};
+
+export const detail = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id;
+
+    const record = await AccountCompany.findOne({
+      _id: id,
+    });
+
+    if (record) {
+      const companyDetail = {
+        id: record.id,
+        logo: record.logo,
+        companyName: record.companyName,
+        address: record.address,
+        companyModel: record.companyModel,
+        companyEmployees: record.companyEmployees,
+        workingTime: record.workingTime,
+        workOvertime: record.workOvertime,
+        description: record.description,
+      };
+
+      const jobs = await Job.find({
+        companyId: id,
+      }).sort({
+        createdAt: "desc",
+      });
+
+      const dataFinal = [];
+      for (const item of jobs) {
+        const itemFinal = {
+          id: item.id,
+          companyLogo: record.logo,
+          title: item.title,
+          companyName: record.companyName,
+          salaryMin: item.salaryMin,
+          salaryMax: item.salaryMax,
+          position: item.position,
+          workingForm: item.workingForm,
+          companyCity: "",
+          technologies: item.technologies,
+        };
+
+        const city = await City.findOne({
+          _id: record.city,
+        });
+        itemFinal.companyCity = `${city?.name}`;
+
+        dataFinal.push(itemFinal);
+      }
+
+      res.json({
+        code: "success",
+        message: "Thành công!",
+        companyDetail: companyDetail,
+        jobs: dataFinal,
+      });
+    } else {
+      res.json({
+        code: "error",
+        message: "Thất bại!",
+      });
+    }
+  } catch (error) {
+    res.json({
+      code: "error",
+      message: "Thất bại!",
+    });
+  }
+};
+
+export const listCV = async (req: AccountRequest, res: Response) => {
+  const companyId = req.account.id;
+
+  // Lấy tất cả job của công ty hiện tại
+  const listJob = await Job.find({
+    companyId: companyId,
+  }).select("id");
+
+  const listJobId = listJob.map((item) => item.id);
+
+  const find = {
+    jobId: { $in: listJobId },
+  };
+
+  const limitItems = 6;
+  let page = 1;
+  if (req.query.page) {
+    page = parseInt(`${req.query.page}`);
+  }
+
+  const totalRecord = await CV.countDocuments(find);
+  const totalPage = Math.ceil(totalRecord / limitItems) || 1;
+  const skip = (page - 1) * limitItems;
+
+  const listCV = await CV.find(find)
+    .sort({
+      createdAt: "desc",
+    })
+    .limit(limitItems)
+    .skip(skip);
+
+  const dataFinal: any[] = [];
+
+  for (const item of listCV) {
+    const dataItemFinal: any = {
+      id: item.id,
+      jobTitle: "",
+      fullName: item.fullName,
+      email: item.email,
+      phone: item.phone,
+      jobSalaryMin: 0,
+      jobSalaryMax: 0,
+      jobPosition: "",
+      jobWorkingForm: "",
+      viewed: item.viewed,
+      status: item.status,
+    };
+
+    const infoJob = await Job.findOne({
+      _id: item.jobId,
+    });
+
+    if (infoJob) {
+      dataItemFinal.jobTitle = `${infoJob.title}`;
+      dataItemFinal.jobSalaryMin = parseInt(`${infoJob.salaryMin}`);
+      dataItemFinal.jobSalaryMax = parseInt(`${infoJob.salaryMax}`);
+      dataItemFinal.jobPosition = `${infoJob.position}`;
+      dataItemFinal.jobWorkingForm = `${infoJob.workingForm}`;
+    }
+
+    dataFinal.push(dataItemFinal);
+  }
+
+  res.json({
+    code: "success",
+    message: "Lấy danh sách CV thành công!",
+    listCV: dataFinal,
+    totalPage: totalPage,
+  });
+};
+
+export const detailCV = async (req: AccountRequest, res: Response) => {
+  try {
+    const companyId = req.account.id;
+    const cvId = req.params.id;
+
+    const infoCV = await CV.findOne({
+      _id: cvId,
+    });
+
+    if (!infoCV) {
+      res.json({
+        code: "error",
+        message: "Thất bại!",
+      });
+      return;
+    }
+
+    const infoJob = await Job.findOne({
+      _id: infoCV.jobId,
+      companyId: companyId,
+    });
+
+    if (!infoJob) {
+      res.json({
+        code: "error",
+        message: "Thất bại!",
+      });
+      return;
+    }
+
+    const dataFinalCV = {
+      fullName: infoCV.fullName,
+      email: infoCV.email,
+      phone: infoCV.phone,
+      fileCV: infoCV.fileCV,
+    };
+
+    const dataFinalJob = {
+      id: infoJob.id,
+      title: infoJob.title,
+      salaryMin: infoJob.salaryMin,
+      salaryMax: infoJob.salaryMax,
+      position: infoJob.position,
+      workingForm: infoJob.workingForm,
+      technologies: infoJob.technologies,
+    };
+
+    // Cập nhật trạng thái thành đã xem
+    await CV.updateOne(
+      {
+        _id: cvId,
+      },
+      {
+        viewed: true,
+      },
+    );
+
+    res.json({
+      code: "success",
+      message: "Thành công!",
+      infoCV: dataFinalCV,
+      infoJob: dataFinalJob,
+    });
+  } catch (error) {
+    res.json({
+      code: "error",
+      message: "Thất bại!",
+    });
+  }
+};
+
+export const changeStatusCVPatch = async (req: AccountRequest, res: Response) => {
+  try {
+    const companyId = req.account.id;
+    const cvId = req.body.id;
+    const status = req.body.status;
+
+    const infoCV = await CV.findOne({
+      _id: cvId,
+    });
+
+    if (!infoCV) {
+      res.json({
+        code: "error",
+        message: "Thất bại!",
+      });
+      return;
+    }
+
+    const infoJob = await Job.findOne({
+      _id: infoCV.jobId,
+      companyId: companyId,
+    });
+
+    if (!infoJob) {
+      res.json({
+        code: "error",
+        message: "Thất bại!",
+      });
+      return;
+    }
+
+    await CV.updateOne(
+      {
+        _id: cvId,
+      },
+      {
+        status: status,
+      },
+    );
+
+    res.json({
+      code: "success",
+      message: "Thành công!",
+    });
+  } catch (error) {
+    res.json({
+      code: "error",
+      message: "Thất bại!",
+    });
+  }
+};
+
+export const deleteCVDel = async (req: AccountRequest, res: Response) => {
+  try {
+    const companyId = req.account.id;
+    const cvId = req.params.id;
+
+    const infoCV = await CV.findOne({
+      _id: cvId,
+    });
+
+    if (!infoCV) {
+      res.json({
+        code: "error",
+        message: "Thất bại!",
+      });
+      return;
+    }
+
+    const infoJob = await Job.findOne({
+      _id: infoCV.jobId,
+      companyId: companyId,
+    });
+
+    if (!infoJob) {
+      res.json({
+        code: "error",
+        message: "Thất bại!",
+      });
+      return;
+    }
+
+    await CV.deleteOne({
+      _id: cvId,
+    });
+
+    res.json({
+      code: "success",
+      message: "Đã xóa CV!",
+    });
+  } catch (error) {
+    res.json({
+      code: "error",
+      message: "Thất bại!",
+    });
+  }
 };
