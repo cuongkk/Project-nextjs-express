@@ -5,9 +5,10 @@ import AccountCompany from "../models/account-company.model";
 
 export const check = async (req: Request, res: Response) => {
   try {
-    const token = req.cookies.token;
+    const accessToken = req.cookies.accessToken;
+    const refreshToken = req.cookies.refreshToken;
 
-    if (!token) {
+    if (!accessToken && !refreshToken) {
       res.json({
         code: "error",
         message: "Token không hợp lệ!",
@@ -15,7 +16,34 @@ export const check = async (req: Request, res: Response) => {
       return;
     }
 
-    const decoded = jwt.verify(token, `${process.env.JWT_SECRET}`) as jwt.JwtPayload; // Giải mã token
+    let decoded: jwt.JwtPayload | null = null;
+
+    // Thử verify accessToken trước
+    if (accessToken) {
+      try {
+        decoded = jwt.verify(accessToken, `${process.env.JWT_SECRET}`) as jwt.JwtPayload;
+      } catch (err: any) {
+        if (err.name !== "TokenExpiredError") {
+          throw err;
+        }
+      }
+    }
+
+    let fromRefresh = false;
+    if (!decoded && refreshToken) {
+      decoded = jwt.verify(refreshToken, `${process.env.JWT_REFRESH_SECRET}`) as jwt.JwtPayload;
+      fromRefresh = true;
+    }
+
+    if (!decoded) {
+      res.clearCookie("accessToken");
+      res.clearCookie("refreshToken");
+      res.json({
+        code: "error",
+        message: "Token không hợp lệ!",
+      });
+      return;
+    }
 
     const { id, email } = decoded;
 
@@ -26,14 +54,33 @@ export const check = async (req: Request, res: Response) => {
     });
 
     if (existAccountUser) {
+      // Nếu xác thực bằng refreshToken thì cấp lại accessToken mới
+      if (fromRefresh) {
+        const newAccessToken = jwt.sign(
+          {
+            id: existAccountUser.id,
+            email: existAccountUser.email,
+          },
+          `${process.env.JWT_SECRET}`,
+          {
+            expiresIn: "15m",
+          },
+        );
+
+        res.cookie("accessToken", newAccessToken, {
+          maxAge: 15 * 60 * 1000,
+          httpOnly: true,
+          sameSite: "lax",
+          secure: process.env.NODE_ENV === "production",
+        });
+      }
+
       const infoUser = {
         id: existAccountUser.id,
         fullName: existAccountUser.fullName,
         email: existAccountUser.email,
         avatar: existAccountUser.avatar,
-        phone: existAccountUser.phone,
       };
-
       res.json({
         code: "success",
         message: "Token hợp lệ!",
@@ -49,6 +96,26 @@ export const check = async (req: Request, res: Response) => {
     });
 
     if (existAccountCompany) {
+      if (fromRefresh) {
+        const newAccessToken = jwt.sign(
+          {
+            id: existAccountCompany.id,
+            email: existAccountCompany.email,
+          },
+          `${process.env.JWT_SECRET}`,
+          {
+            expiresIn: "15m",
+          },
+        );
+
+        res.cookie("accessToken", newAccessToken, {
+          maxAge: 15 * 60 * 1000,
+          httpOnly: true,
+          sameSite: "lax",
+          secure: process.env.NODE_ENV === "production",
+        });
+      }
+
       const infoCompany = {
         id: existAccountCompany.id,
         companyName: existAccountCompany.companyName,
@@ -73,7 +140,8 @@ export const check = async (req: Request, res: Response) => {
     }
 
     // Không tìm thấy ở cả 2 collection
-    res.clearCookie("token");
+    res.clearCookie("accessToken");
+    res.clearCookie("refreshToken");
     res.json({
       code: "error",
       message: "Token không hợp lệ!",
@@ -89,9 +157,10 @@ export const check = async (req: Request, res: Response) => {
 
 export const authCompanyCheck = async (req: Request, res: Response) => {
   try {
-    const token = req.cookies.token;
+    const accessToken = req.cookies.accessToken;
+    const refreshToken = req.cookies.refreshToken;
 
-    if (!token) {
+    if (!accessToken && !refreshToken) {
       res.json({
         code: "error",
         message: "Token không hợp lệ!",
@@ -99,7 +168,33 @@ export const authCompanyCheck = async (req: Request, res: Response) => {
       return;
     }
 
-    const decoded = jwt.verify(token, `${process.env.JWT_SECRET}`) as jwt.JwtPayload;
+    let decoded: jwt.JwtPayload | null = null;
+
+    if (accessToken) {
+      try {
+        decoded = jwt.verify(accessToken, `${process.env.JWT_SECRET}`) as jwt.JwtPayload;
+      } catch (err: any) {
+        if (err.name !== "TokenExpiredError") {
+          throw err;
+        }
+      }
+    }
+
+    let fromRefresh = false;
+    if (!decoded && refreshToken) {
+      decoded = jwt.verify(refreshToken, `${process.env.JWT_REFRESH_SECRET}`) as jwt.JwtPayload;
+      fromRefresh = true;
+    }
+
+    if (!decoded) {
+      res.clearCookie("accessToken");
+      res.clearCookie("refreshToken");
+      res.json({
+        code: "error",
+        message: "Token không hợp lệ!",
+      });
+      return;
+    }
 
     const { id, email } = decoded;
 
@@ -109,13 +204,34 @@ export const authCompanyCheck = async (req: Request, res: Response) => {
     });
 
     if (!existAccountCompany) {
-      res.clearCookie("token");
+      res.clearCookie("accessToken");
+      res.clearCookie("refreshToken");
 
       res.json({
         code: "error",
         message: "Token không hợp lệ!",
       });
       return;
+    }
+
+    if (fromRefresh) {
+      const newAccessToken = jwt.sign(
+        {
+          id: existAccountCompany.id,
+          email: existAccountCompany.email,
+        },
+        `${process.env.JWT_SECRET}`,
+        {
+          expiresIn: "15m",
+        },
+      );
+
+      res.cookie("accessToken", newAccessToken, {
+        maxAge: 15 * 60 * 1000,
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+      });
     }
 
     const infoCompany = {
@@ -139,7 +255,8 @@ export const authCompanyCheck = async (req: Request, res: Response) => {
 };
 
 export const logout = async (req: Request, res: Response) => {
-  res.clearCookie("token");
+  res.clearCookie("accessToken");
+  res.clearCookie("refreshToken");
   res.json({
     code: "success",
     message: "Đã đăng xuất!",

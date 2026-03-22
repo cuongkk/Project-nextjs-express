@@ -1,12 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Toaster, toast } from "sonner";
+import { CheckBox } from "@/app/components/checkbox/CheckBox";
+import { useState } from "react";
+import Link from "next/dist/client/link";
 
 export const FormLogin = () => {
   const router = useRouter();
+  const [checked, setChecked] = useState(false);
 
   const {
     register,
@@ -18,6 +21,7 @@ export const FormLogin = () => {
     const dataFinal = {
       email: data.email,
       password: data.password,
+      checked: checked,
     };
 
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/company/login`, {
@@ -44,7 +48,7 @@ export const FormLogin = () => {
   return (
     <>
       <Toaster richColors position="top-right" />
-      <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 gap-y-[15px]" id="loginForm">
+      <form onSubmit={handleSubmit(onSubmit) as any} className="grid grid-cols-1 gap-y-[15px]" id="loginForm">
         <div className="">
           <label htmlFor="email" className="block font-[500] text-[14px] text-black mb-[5px]">
             Email *
@@ -81,6 +85,15 @@ export const FormLogin = () => {
           <button type="submit" className="bg-[#0088FF] rounded-[4px] w-[100%] h-[48px] px-[20px] font-[700] text-[16px] text-white">
             Đăng nhập
           </button>
+        </div>
+        <div className="flex flex-direction-row items-center justify-between">
+          <div>
+            <CheckBox checked={checked} onChange={setChecked} />
+            <span className="font-[500] text-[14px] text-black">Ghi nhớ đăng nhập</span>
+          </div>
+          <Link href="/company/forgotpassword">
+            <div className="font-[500] text-[14px] text-[#0088FF]">Quên mật khẩu?</div>
+          </Link>
         </div>
       </form>
     </>

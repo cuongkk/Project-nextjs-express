@@ -13,7 +13,13 @@ router.post("/register", userValidate.registerPost, userController.registerPost)
 
 router.post("/login", userValidate.loginPost, userController.loginPost);
 
+router.post("/forgot-password", userValidate.forgotPasswordPost, userController.forgotPasswordPost);
+
+router.post("/reset-password", userValidate.resetPasswordPost, userController.resetPasswordPost);
+
 router.patch("/profile", authMiddleware.verifyTokenUser, upload.single("avatar"), userController.profilePatch);
+
+router.patch("/change-password", authMiddleware.verifyTokenUser, userController.changePasswordPatch);
 
 router.get("/cv/list", authMiddleware.verifyTokenUser, userController.listCV);
 

@@ -77,3 +77,55 @@ export const loginPost = async (req: Request, res: Response, next: NextFunction)
 
   next();
 };
+
+export const forgotPasswordPost = async (req: Request, res: Response, next: NextFunction) => {
+  const schema = Joi.object({
+    email: Joi.string().email().required().messages({
+      "string.empty": "Vui lòng nhập email!",
+      "string.email": "Email không đúng định dạng!",
+    }),
+  });
+
+  const { error } = schema.validate(req.body);
+  if (error) {
+    const errorMessage = error.details[0].message;
+
+    res.json({
+      code: "error",
+      message: errorMessage,
+    });
+    return;
+  }
+
+  next();
+};
+
+export const resetPasswordPost = async (req: Request, res: Response, next: NextFunction) => {
+  const schema = Joi.object({
+    email: Joi.string().email().required().messages({
+      "string.empty": "Vui lòng nhập email!",
+      "string.email": "Email không đúng định dạng!",
+    }),
+    otp: Joi.string().length(6).required().messages({
+      "string.empty": "Vui lòng nhập mã OTP!",
+      "string.length": "Mã OTP phải gồm 6 ký tự!",
+    }),
+    newPassword: Joi.string().min(8).required().messages({
+      "string.empty": "Vui lòng nhập mật khẩu mới!",
+      "string.min": "Mật khẩu phải có ít nhất 8 ký tự!",
+    }),
+  });
+
+  const { error } = schema.validate(req.body);
+  if (error) {
+    const errorMessage = error.details[0].message;
+
+    res.json({
+      code: "error",
+      message: errorMessage,
+    });
+    return;
+  }
+
+  next();
+};

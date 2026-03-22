@@ -18,7 +18,7 @@ export const Header = () => {
         <div className="contain">
           <div className="flex justify-between items-center">
             <Link href="/" className="font-[800] sm:text-[28px] text-[20px] text-white lg:flex-none flex-1">
-              28.ITJobs
+              ITJobs
             </Link>
             <HeaderMenu showMenu={showMenu} />
             <HeaderAccount />

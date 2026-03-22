@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 
 export const HeaderAccount = () => {
-  const { isLogin, infoUser, infoCompany } = useAuth();
+  const { isLogin, infoUser, infoCompany, isAuthLoaded } = useAuth();
   const router = useRouter();
 
   const handleLogout = (url: string) => {
@@ -17,6 +17,14 @@ export const HeaderAccount = () => {
         }
       });
   };
+
+  if (!isAuthLoaded) {
+    return (
+      <>
+        <div></div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -32,6 +40,11 @@ export const HeaderAccount = () => {
                 <li className="py-[10px] px-[16px] flex items-center justify-between hover:bg-[#000096] rounded-[4px] group/sub-2">
                   <Link className="font-[600] text-[16px] text-white" href="/user-manage/profile">
                     Thông tin cá nhân
+                  </Link>
+                </li>
+                <li className="py-[10px] px-[16px] flex items-center justify-between hover:bg-[#000096] rounded-[4px] group/sub-2">
+                  <Link className="font-[600] text-[16px] text-white" href="/user-manage/change-password">
+                    Đổi mật khẩu
                   </Link>
                 </li>
                 <li className="py-[10px] px-[16px] flex items-center justify-between hover:bg-[#000096] rounded-[4px] group/sub-2">

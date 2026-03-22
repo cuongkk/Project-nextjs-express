@@ -13,6 +13,10 @@ router.post("/register", companyValidate.registerPost, companyController.registe
 
 router.post("/login", companyValidate.loginPost, companyController.loginPost);
 
+router.post("/forgot-password", companyValidate.forgotPasswordPost, companyController.forgotPasswordPost);
+
+router.post("/reset-password", companyValidate.resetPasswordPost, companyController.resetPasswordPost);
+
 router.patch("/profile", authMiddleware.verifyTokenCompany, upload.single("logo"), companyController.profilePatch);
 
 router.post("/job/create", authMiddleware.verifyTokenCompany, upload.array("images", 8), companyController.createJobPost);

@@ -23,11 +23,11 @@ export const Section1 = () => {
             <select name="city" className="md:w-[240px] w-[100%] h-[56px] rounded-[4px] px-[20px] font-[500] text-[16px] text-[#121212] bg-white">
               {" "}
               <option value="">Tất cả</option>
-              <option value="">Hà Nội</option>
-              <option value="">Đà Nẵng</option>
-              <option value="">Hồ Chí Minh</option>
+              <option value="Hà Nội">Hà Nội</option>
+              <option value="Đà Nẵng">Đà Nẵng</option>
+              <option value="Hồ Chí Minh">Hồ Chí Minh</option>
             </select>
-            <input type="text" className="flex-1 h-[56px] rounded-[4px] px-[20px] font-[500] text-[16px] text-[#121212] bg-white" placeholder="Nhập từ khoá..." />
+            <input type="text" name="keyword" className="flex-1 h-[56px] rounded-[4px] px-[20px] font-[500] text-[16px] text-[#121212] bg-white" placeholder="Nhập từ khoá..." />
             <button className="md:w-[240px] w-[100%] h-[56px] bg-primary rounded-[4px] text-white font-[500] text-[16px] flex items-center justify-center">
               <FaMagnifyingGlass className="text-[20px] mr-[5px]" /> Tìm Kiếm
             </button>
@@ -36,19 +36,19 @@ export const Section1 = () => {
             <div className="font-[500] text-[16px] text-[#DEDEDE]">Mọi người đang tìm kiếm:</div>
             <div className="flex flex-wrap gap-[10px]">
               <Link
-                href=""
+                href="/search?language=reactjs"
                 className="rounded-[20px] bg-[#121212] hover:bg-[#414042] border-[1px] border-[#414042] py-[8px] px-[22px] font-[500] text-[16px] text-[#DEDEDE] hover:text-[#FFFFFF] inline-block"
               >
                 ReactJS
               </Link>
               <Link
-                href=""
+                href="/search?language=javascript"
                 className="rounded-[20px] bg-[#121212] hover:bg-[#414042] border-[1px] border-[#414042] py-[8px] px-[22px] font-[500] text-[16px] text-[#DEDEDE] hover:text-[#FFFFFF] inline-block"
               >
                 Javascript
               </Link>
               <Link
-                href=""
+                href="/search?language=nodejs"
                 className="rounded-[20px] bg-[#121212] hover:bg-[#414042] border-[1px] border-[#414042] py-[8px] px-[22px] font-[500] text-[16px] text-[#DEDEDE] hover:text-[#FFFFFF] inline-block"
               >
                 NodeJS

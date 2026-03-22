@@ -1,0 +1,16 @@
+export const PAGINATION = {
+  // Số item mỗi trang cho danh sách job của 1 công ty (backend quản lý công ty)
+  COMPANY_JOB_PAGE_SIZE: 2,
+
+  // Số item mỗi trang cho danh sách công ty
+  COMPANY_LIST_PAGE_SIZE: 12,
+
+  // Số item mỗi trang cho danh sách CV phía công ty
+  COMPANY_CV_PAGE_SIZE: 6,
+
+  // Số item mỗi trang cho danh sách CV phía user
+  USER_CV_PAGE_SIZE: 6,
+
+  // Số item mỗi trang cho kết quả tìm kiếm job
+  SEARCH_JOB_PAGE_SIZE: 2,
+};

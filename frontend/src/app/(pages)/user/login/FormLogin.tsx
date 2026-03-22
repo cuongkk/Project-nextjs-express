@@ -1,11 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import Link from "next/dist/client/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Toaster, toast } from "sonner";
+import { CheckBox } from "@/app/components/checkbox/CheckBox";
+import { useState } from "react";
 
 export const FormLogin = () => {
+  const [checked, setChecked] = useState(false);
+
   const route = useRouter();
 
   const {
@@ -18,6 +23,7 @@ export const FormLogin = () => {
     const dataFinal = {
       email: data.email,
       password: data.password,
+      check: checked,
     };
 
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/user/login`, {
@@ -81,6 +87,15 @@ export const FormLogin = () => {
           <button type="submit" className="bg-[#0088FF] rounded-[4px] w-[100%] h-[48px] px-[20px] font-[700] text-[16px] text-white">
             Đăng nhập
           </button>
+        </div>
+        <div className="flex flex-direction-row items-center justify-between">
+          <div>
+            <CheckBox checked={checked} onChange={setChecked} />
+            <span className="font-[500] text-[14px] text-black">Ghi nhớ đăng nhập</span>
+          </div>
+          <Link href="/user/forgotpassword">
+            <div className="font-[500] text-[14px] text-[#0088FF]">Quên mật khẩu?</div>
+          </Link>
         </div>
       </form>
     </>

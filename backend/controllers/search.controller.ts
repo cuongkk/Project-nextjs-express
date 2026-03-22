@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import Job from "../models/job.model";
 import AccountCompany from "../models/account-company.model";
 import City from "../models/city.model";
+import { PAGINATION } from "../configs/variable.config";
 
 export const search = async (req: Request, res: Response) => {
   const dataFinal = [];
@@ -52,7 +53,7 @@ export const search = async (req: Request, res: Response) => {
     }
 
     // Phân trang
-    const limitItems = 2;
+    const limitItems = PAGINATION.SEARCH_JOB_PAGE_SIZE;
     let page = 1;
     if (req.query.page) {
       page = parseInt(`${req.query.page}`);

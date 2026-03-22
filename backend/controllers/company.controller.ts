@@ -6,6 +6,9 @@ import { AccountRequest } from "../interfaces/request.interface";
 import Job from "../models/job.model";
 import City from "../models/city.model";
 import CV from "../models/cv.model";
+import ForgotPassword from "../models/forgot-password.model";
+import { sendMail } from "../helpers/mail.helper";
+import { PAGINATION } from "../configs/variable.config";
 
 export const registerPost = async (req: Request, res: Response) => {
   const { companyName, email, password } = req.body;
@@ -40,9 +43,15 @@ export const registerPost = async (req: Request, res: Response) => {
 };
 
 export const loginPost = async (req: Request, res: Response) => {
-  const { email, password } = req.body;
+  const { email, password, checked, rememberMe } = req.body as {
+    email: string;
+    password: string;
+    checked?: boolean | string;
+    rememberMe?: boolean | string;
+  };
 
-  // Kiểm tra email
+  const isRemember = checked === true || checked === "true" || rememberMe === true || rememberMe === "true";
+
   const existAccount = await AccountCompany.findOne({
     email: email,
   });
@@ -55,7 +64,6 @@ export const loginPost = async (req: Request, res: Response) => {
     return;
   }
 
-  // Kiểm tra mật khẩu
   const isPasswordValid = await bcrypt.compare(password, `${existAccount.password}`);
 
   if (!isPasswordValid) {
@@ -66,29 +74,150 @@ export const loginPost = async (req: Request, res: Response) => {
     return;
   }
 
-  // Tạo JWT
-  const token = jwt.sign(
+  const accessToken = jwt.sign(
     {
       id: existAccount.id,
       email: existAccount.email,
     },
     `${process.env.JWT_SECRET}`,
     {
-      expiresIn: "1d",
+      expiresIn: "15m",
     },
   );
 
-  // Lưu token vào cookie
-  res.cookie("token", token, {
-    maxAge: 24 * 60 * 60 * 1000, // 1 ngày
-    httpOnly: true, // Chỉ cho phép cookie được truy cập bởi server
+  const refreshToken = jwt.sign(
+    {
+      id: existAccount.id,
+      email: existAccount.email,
+    },
+    `${process.env.JWT_REFRESH_SECRET}`,
+    {
+      expiresIn: "7d",
+    },
+  );
+
+  res.cookie("accessToken", accessToken, {
+    maxAge: 15 * 60 * 1000, // 15 phút
+    httpOnly: true,
     sameSite: "lax", // Cho phép lấy được cookie từ tên miền khác
     secure: process.env.NODE_ENV === "production", // http: false, https: true
   });
 
+  const refreshCookieOptions: any = {
+    httpOnly: true,
+    sameSite: "lax", // Cho phép lấy được cookie từ tên miền khác
+    secure: process.env.NODE_ENV === "production", // http: false, https: true
+  };
+
+  if (isRemember) {
+    refreshCookieOptions.maxAge = 7 * 24 * 60 * 60 * 1000; // 7 ngày
+  }
+
+  res.cookie("refreshToken", refreshToken, refreshCookieOptions);
+
   res.json({
     code: "success",
     message: "Đăng nhập thành công!",
+  });
+};
+
+export const forgotPasswordPost = async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  const existAccount = await AccountCompany.findOne({
+    email: email,
+  });
+
+  if (!existAccount) {
+    res.json({
+      code: "error",
+      message: "Email không tồn tại trong hệ thống!",
+    });
+    return;
+  }
+
+  const existingOTP = await ForgotPassword.findOne({
+    email: email,
+    accountType: "company",
+  });
+
+  if (existingOTP) {
+    res.json({
+      code: "error",
+      message: "Mã OTP đã được gửi. Vui lòng kiểm tra email của bạn!",
+    });
+    return;
+  }
+
+  const characters = "0123456789";
+  let otpCode = "";
+  for (let i = 0; i < 6; i++) {
+    otpCode += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+
+  const newRecord = new ForgotPassword({
+    email: email,
+    otp: otpCode,
+    accountType: "company",
+    expireAt: new Date(Date.now() + 5 * 60 * 1000),
+  });
+
+  await newRecord.save();
+
+  const subject = "Mã OTP đặt lại mật khẩu";
+  const content = `Mã OTP của bạn là: <b>${otpCode}</b>. Mã có hiệu lực trong 5 phút.`;
+  await sendMail(email, subject, content);
+
+  res.json({
+    code: "success",
+    message: "Đã gửi mã OTP đến email của bạn!",
+  });
+};
+
+export const resetPasswordPost = async (req: Request, res: Response) => {
+  const { email, otp, newPassword } = req.body;
+
+  const existRecord = await ForgotPassword.findOne({
+    email: email,
+    otp: otp,
+    accountType: "company",
+  });
+
+  if (!existRecord) {
+    res.json({
+      code: "error",
+      message: "Mã OTP không đúng hoặc đã hết hạn!",
+    });
+    return;
+  }
+
+  await ForgotPassword.deleteOne({ _id: existRecord.id });
+
+  const existAccount = await AccountCompany.findOne({ email: email });
+
+  if (!existAccount) {
+    res.json({
+      code: "error",
+      message: "Tài khoản không tồn tại!",
+    });
+    return;
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  const hash = await bcrypt.hash(newPassword, salt);
+
+  await AccountCompany.updateOne(
+    {
+      _id: existAccount.id,
+    },
+    {
+      password: hash,
+    },
+  );
+
+  res.json({
+    code: "success",
+    message: "Đặt lại mật khẩu thành công!",
   });
 };
 
@@ -156,7 +285,7 @@ export const listJob = async (req: AccountRequest, res: Response) => {
   };
 
   // Phân trang
-  const limitItems = 2;
+  const limitItems = PAGINATION.COMPANY_JOB_PAGE_SIZE;
   let page = 1;
   if (req.query.page) {
     page = parseInt(`${req.query.page}`);
@@ -311,7 +440,7 @@ export const deleteJobDel = async (req: AccountRequest, res: Response) => {
 export const list = async (req: AccountRequest, res: Response) => {
   const find: any = {};
 
-  let limitItems = 12;
+  let limitItems = PAGINATION.COMPANY_LIST_PAGE_SIZE;
   if (req.query.limitItems) {
     limitItems = parseInt(`${req.query.limitItems}`);
   }
@@ -452,7 +581,7 @@ export const listCV = async (req: AccountRequest, res: Response) => {
     jobId: { $in: listJobId },
   };
 
-  const limitItems = 6;
+  const limitItems = PAGINATION.COMPANY_CV_PAGE_SIZE;
   let page = 1;
   if (req.query.page) {
     page = parseInt(`${req.query.page}`);

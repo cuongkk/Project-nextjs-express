@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Response } from "express";
 import jwt from "jsonwebtoken";
 import AccountUser from "../models/account-user.model";
 import { AccountRequest } from "../interfaces/request.interface";
@@ -6,9 +6,10 @@ import AccountCompany from "../models/account-company.model";
 
 export const verifyTokenUser = async (req: AccountRequest, res: Response, next: NextFunction) => {
   try {
-    const token = req.cookies.token;
+    const accessToken = req.cookies.accessToken;
+    const refreshToken = req.cookies.refreshToken;
 
-    if (!token) {
+    if (!accessToken && !refreshToken) {
       res.json({
         code: "error",
         message: "Vui lòng gửi kèm theo token!",
@@ -16,7 +17,36 @@ export const verifyTokenUser = async (req: AccountRequest, res: Response, next: 
       return;
     }
 
-    const decoded = jwt.verify(token, `${process.env.JWT_SECRET}`) as jwt.JwtPayload; // Giải mã token
+    let decoded: jwt.JwtPayload | null = null;
+
+    // Thử verify accessToken trước
+    if (accessToken) {
+      try {
+        decoded = jwt.verify(accessToken, `${process.env.JWT_SECRET}`) as jwt.JwtPayload;
+      } catch (err: any) {
+        if (err.name !== "TokenExpiredError") {
+          throw err;
+        }
+      }
+    }
+
+    // Nếu accessToken không hợp lệ hoặc hết hạn, thử dùng refreshToken
+    let fromRefresh = false;
+    if (!decoded && refreshToken) {
+      decoded = jwt.verify(refreshToken, `${process.env.JWT_REFRESH_SECRET}`) as jwt.JwtPayload;
+      fromRefresh = true;
+    }
+
+    if (!decoded) {
+      res.clearCookie("accessToken");
+      res.clearCookie("refreshToken");
+      res.json({
+        code: "error",
+        message: "Token không hợp lệ!",
+      });
+      return;
+    }
+
     const { id, email } = decoded;
 
     const existAccount = await AccountUser.findOne({
@@ -25,7 +55,8 @@ export const verifyTokenUser = async (req: AccountRequest, res: Response, next: 
     });
 
     if (!existAccount) {
-      res.clearCookie("token");
+      res.clearCookie("accessToken");
+      res.clearCookie("refreshToken");
       res.json({
         code: "error",
         message: "Token không hợp lệ!",
@@ -33,11 +64,33 @@ export const verifyTokenUser = async (req: AccountRequest, res: Response, next: 
       return;
     }
 
+    // Nếu xác thực bằng refreshToken thì cấp lại accessToken mới
+    if (fromRefresh) {
+      const newAccessToken = jwt.sign(
+        {
+          id: existAccount.id,
+          email: existAccount.email,
+        },
+        `${process.env.JWT_SECRET}`,
+        {
+          expiresIn: "15m",
+        },
+      );
+
+      res.cookie("accessToken", newAccessToken, {
+        maxAge: 15 * 60 * 1000,
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+      });
+    }
+
     req.account = existAccount;
 
     next();
   } catch (error) {
-    res.clearCookie("token");
+    res.clearCookie("accessToken");
+    res.clearCookie("refreshToken");
     res.json({
       code: "error",
       message: error,
@@ -47,9 +100,10 @@ export const verifyTokenUser = async (req: AccountRequest, res: Response, next: 
 
 export const verifyTokenCompany = async (req: AccountRequest, res: Response, next: NextFunction) => {
   try {
-    const token = req.cookies.token;
+    const accessToken = req.cookies.accessToken;
+    const refreshToken = req.cookies.refreshToken;
 
-    if (!token) {
+    if (!accessToken && !refreshToken) {
       res.json({
         code: "error",
         message: "Vui lòng gửi kèm theo token!",
@@ -57,7 +111,36 @@ export const verifyTokenCompany = async (req: AccountRequest, res: Response, nex
       return;
     }
 
-    const decoded = jwt.verify(token, `${process.env.JWT_SECRET}`) as jwt.JwtPayload; // Giải mã token
+    let decoded: jwt.JwtPayload | null = null;
+
+    // Thử verify accessToken trước
+    if (accessToken) {
+      try {
+        decoded = jwt.verify(accessToken, `${process.env.JWT_SECRET}`) as jwt.JwtPayload;
+      } catch (err: any) {
+        if (err.name !== "TokenExpiredError") {
+          throw err;
+        }
+      }
+    }
+
+    // Nếu accessToken không hợp lệ hoặc hết hạn, thử dùng refreshToken
+    let fromRefresh = false;
+    if (!decoded && refreshToken) {
+      decoded = jwt.verify(refreshToken, `${process.env.JWT_REFRESH_SECRET}`) as jwt.JwtPayload;
+      fromRefresh = true;
+    }
+
+    if (!decoded) {
+      res.clearCookie("accessToken");
+      res.clearCookie("refreshToken");
+      res.json({
+        code: "error",
+        message: "Token không hợp lệ!",
+      });
+      return;
+    }
+
     const { id, email } = decoded;
 
     const existAccount = await AccountCompany.findOne({
@@ -66,7 +149,8 @@ export const verifyTokenCompany = async (req: AccountRequest, res: Response, nex
     });
 
     if (!existAccount) {
-      res.clearCookie("token");
+      res.clearCookie("accessToken");
+      res.clearCookie("refreshToken");
       res.json({
         code: "error",
         message: "Token không hợp lệ!",
@@ -74,11 +158,33 @@ export const verifyTokenCompany = async (req: AccountRequest, res: Response, nex
       return;
     }
 
+    // Nếu xác thực bằng refreshToken thì cấp lại accessToken mới
+    if (fromRefresh) {
+      const newAccessToken = jwt.sign(
+        {
+          id: existAccount.id,
+          email: existAccount.email,
+        },
+        `${process.env.JWT_SECRET}`,
+        {
+          expiresIn: "15m",
+        },
+      );
+
+      res.cookie("accessToken", newAccessToken, {
+        maxAge: 15 * 60 * 1000,
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+      });
+    }
+
     req.account = existAccount;
 
     next();
   } catch (error) {
-    res.clearCookie("token");
+    res.clearCookie("accessToken");
+    res.clearCookie("refreshToken");
     res.json({
       code: "error",
       message: error,
