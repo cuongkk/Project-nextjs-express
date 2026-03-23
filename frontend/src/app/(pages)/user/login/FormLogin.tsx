@@ -7,11 +7,13 @@ import { useForm } from "react-hook-form";
 import { Toaster, toast } from "sonner";
 import { CheckBox } from "@/app/components/checkbox/CheckBox";
 import { useState } from "react";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 export const FormLogin = () => {
   const [checked, setChecked] = useState(false);
 
   const route = useRouter();
+  const { setAuth } = useAuthContext();
 
   const {
     register,
@@ -23,7 +25,7 @@ export const FormLogin = () => {
     const dataFinal = {
       email: data.email,
       password: data.password,
-      check: checked,
+      check: checked || false,
     };
 
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/user/login`, {
@@ -42,6 +44,8 @@ export const FormLogin = () => {
 
         if (result.code === "success") {
           toast.success(result.message);
+          // Cập nhật lại context để Header re-render ngay
+          setAuth({ isLogin: true, infoUser: result.infoUser ?? null, infoCompany: null });
           route.push("/");
         }
       });

@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 
 export const HeaderAccount = () => {
-  const { isLogin, infoUser, infoCompany, isAuthLoaded } = useAuth();
+  const { isLogin, infoUser, infoCompany, isAuthLoaded, logout } = useAuth();
   const router = useRouter();
 
   const handleLogout = (url: string) => {
@@ -13,19 +13,14 @@ export const HeaderAccount = () => {
       .then((res) => res.json())
       .then((data) => {
         if (data.code == "success") {
+          logout();
           router.push(url);
         }
       });
   };
-
   if (!isAuthLoaded) {
-    return (
-      <>
-        <div></div>
-      </>
-    );
+    return null;
   }
-
   return (
     <>
       {isLogin ? (
@@ -60,7 +55,6 @@ export const HeaderAccount = () => {
               </ul>
             </div>
           )}
-
           {/* Đã đăng nhập tài khoản company */}
           {infoCompany && (
             <div className="font-[600] sm:text-[16px] text-[12px] text-white relative group/sub-1">

@@ -1,6 +1,7 @@
 "use client";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { set, useForm } from "react-hook-form";
 import { FilePond, registerPlugin } from "react-filepond";
 import FilePondPluginFileValidateType from "filepond-plugin-file-validate-type";
@@ -13,7 +14,8 @@ import { setReloadToast, showReloadToastIfAny } from "@/helpers/toast.helper";
 registerPlugin(FilePondPluginFileValidateType, FilePondPluginImagePreview);
 
 export const FormProfile = () => {
-  const { infoUser } = useAuth();
+  const { infoUser, isLogin, isAuthLoaded } = useAuth();
+  const router = useRouter();
   const [avatars, setAvatars] = useState<any[]>([]);
 
   const {
@@ -26,6 +28,13 @@ export const FormProfile = () => {
   useEffect(() => {
     showReloadToastIfAny();
   }, []);
+
+  useEffect(() => {
+    if (!isAuthLoaded) return;
+    if (!isLogin) {
+      router.replace("/user/login");
+    }
+  }, [isAuthLoaded, isLogin, router]);
 
   useEffect(() => {
     if (!infoUser) return;

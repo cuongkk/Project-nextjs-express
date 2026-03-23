@@ -2,10 +2,11 @@
 "use client";
 import { JobItem } from "@/app/components/card/JobItem";
 import { positionList, workingFormList } from "@/configs/variable";
+import { Pagination } from "@/app/components/pagination/Pagination";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-export const SectionSearch = () => {
+export const SectionJob = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const language = searchParams.get("language") || "";
@@ -59,8 +60,7 @@ export const SectionSearch = () => {
     router.push(`/search?${params.toString()}`);
   };
 
-  const handlePagination = (event: any) => {
-    const value = parseInt(event.target.value);
+  const handlePagination = (value: number) => {
     setPage(value);
   };
 
@@ -68,12 +68,6 @@ export const SectionSearch = () => {
     <>
       <div className="py-[60px]">
         <div className="contain">
-          <h2 className="mb-[30px] font-[700] text-[28px] text-[#121212]">
-            {totalRecord} việc làm
-            <span className="text-primary ml-[5px]">
-              {language} {city} {company} {keyword}
-            </span>
-          </h2>
           <div className="py-[10px] px-[20px] rounded-[8px] flex flex-wrap gap-[12px] mb-[30px]" style={{ boxShadow: "0px 4px 20px 0px #0000000F" }}>
             <select className="h-[36px] border-[1px] border-[#DEDEDE] rounded-[20px] px-[18px] font-[400] text-[16px] text-[#414042]" onChange={handleFilterPosition} defaultValue={position}>
               {positionList.map((item) => (
@@ -90,22 +84,12 @@ export const SectionSearch = () => {
               ))}
             </select>
           </div>
-          <div className="grid lg:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-[20px]">
+          <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-[20px]">
             {jobList.map((item) => (
               <JobItem key={item.id} item={item} />
             ))}
           </div>
-          <div className="mt-[30px]">
-            <select className="border border-[#DEDEDE] rounded-[8px] py-[12px] px-[18px] font-[400] text-[16px] text-[#414042]" onChange={handlePagination}>
-              {Array(totalPage)
-                .fill("")
-                .map((item, index) => (
-                  <option value={index + 1} key={index}>
-                    Trang {index + 1}
-                  </option>
-                ))}
-            </select>
-          </div>
+          <Pagination totalPage={totalPage} page={page} onChange={handlePagination} />
         </div>
       </div>
     </>

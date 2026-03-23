@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { CompanyItem } from "@/app/components/card/CompanyItem";
-
+import { Pagination } from "@/app/components/pagination/Pagination";
 import { useEffect, useState } from "react";
 
 export const CompnayList = () => {
@@ -20,8 +20,7 @@ export const CompnayList = () => {
       });
   }, [page]);
 
-  const handlePagination = (event: any) => {
-    const value = parseInt(event.target.value);
+  const handlePagination = (value: number) => {
     setPage(value);
   };
 
@@ -32,17 +31,7 @@ export const CompnayList = () => {
           <CompanyItem item={item} key={item.id} />
         ))}
       </div>
-      <div className="mt-[30px]">
-        <select className="border border-[#DEDEDE] rounded-[8px] py-[12px] px-[18px] font-[400] text-[16px] text-[#414042]" onChange={handlePagination}>
-          {Array(totalPage)
-            .fill("")
-            .map((item, index) => (
-              <option value={index + 1} key={index}>
-                Trang {index + 1}
-              </option>
-            ))}
-        </select>
-      </div>
+      <Pagination totalPage={totalPage} page={page} onChange={handlePagination} />
     </>
   );
 };

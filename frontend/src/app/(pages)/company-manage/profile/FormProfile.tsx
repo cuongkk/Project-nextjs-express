@@ -3,6 +3,7 @@
 "use client";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { FilePond, registerPlugin } from "react-filepond";
 import "filepond/dist/filepond.min.css";
@@ -16,7 +17,8 @@ import { EditorMCE } from "@/app/components/editor/EditorMCE";
 registerPlugin(FilePondPluginFileValidateType, FilePondPluginImagePreview);
 
 export const FormProfile = () => {
-  const { infoCompany } = useAuth();
+  const { infoCompany, isLogin, isAuthLoaded } = useAuth();
+  const router = useRouter();
   const [logos, setLogos] = useState<any[]>([]);
   const [cityList, setCityList] = useState<any[]>([]);
   const editorRef = useRef(null);
@@ -37,6 +39,13 @@ export const FormProfile = () => {
         }
       });
   }, []);
+
+  useEffect(() => {
+    if (!isAuthLoaded) return;
+    if (!isLogin) {
+      router.replace("/company/login");
+    }
+  }, [isAuthLoaded, isLogin, router]);
 
   useEffect(() => {
     if (!infoCompany) return;

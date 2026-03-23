@@ -27,16 +27,16 @@ export const positionList = [
 
 export const workingFormList = [
   {
-    value: "office",
-    label: "Tại văn phòng",
+    value: "full-time",
+    label: "Full-time",
   },
   {
     value: "remote",
-    label: "Làm từ xa",
+    label: "Remote",
   },
   {
-    value: "flexible",
-    label: "Linh hoạt",
+    value: "part-time",
+    label: "Part-time",
   },
 ];
 
@@ -57,3 +57,11 @@ export const cvStatusList = [
     color: "#FF5100",
   },
 ];
+
+export const applyTermsContent = `Khi nộp hồ sơ ứng tuyển, bạn đồng ý cho phép hệ thống lưu trữ và xử lý thông tin cá nhân, hồ sơ CV của bạn để gửi tới nhà tuyển dụng phù hợp.
+
+Bạn cam kết:
+- Thông tin cung cấp là chính xác, không giả mạo.
+- Không đính kèm nội dung vi phạm pháp luật, thuần phong mỹ tục.
+
+Hệ thống có thể sử dụng thông tin để gợi ý việc làm, gửi thông báo liên quan đến hoạt động tuyển dụng. Nếu bạn không đồng ý, vui lòng không tiếp tục nộp hồ sơ.`;

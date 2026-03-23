@@ -43,14 +43,13 @@ export const registerPost = async (req: Request, res: Response) => {
 };
 
 export const loginPost = async (req: Request, res: Response) => {
-  const { email, password, checked, rememberMe } = req.body as {
+  const { email, password, check } = req.body as {
     email: string;
     password: string;
-    checked?: boolean | string;
-    rememberMe?: boolean | string;
+    check?: boolean | string;
   };
 
-  const isRemember = checked === true || checked === "true" || rememberMe === true || rememberMe === "true";
+  const isRemember = check === true || check === "true";
 
   const existAccount = await AccountUser.findOne({
     email: email,
@@ -118,6 +117,12 @@ export const loginPost = async (req: Request, res: Response) => {
   res.json({
     code: "success",
     message: "Đăng nhập thành công!",
+    infoUser: {
+      id: existAccount.id,
+      fullName: existAccount.fullName,
+      email: existAccount.email,
+      avatar: existAccount.avatar ?? null,
+    },
   });
 };
 

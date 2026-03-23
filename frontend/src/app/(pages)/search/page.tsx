@@ -1,16 +1,15 @@
-import { Section1 } from "@/app/components/section/Section1";
-import { SectionSearch } from "./SectionSearch";
+import { SectionJob } from "@/app/components/section/SectionJob";
+import { SectionSearch } from "@/app/components/section/SectionSearch";
 
 export default function Page() {
   return (
     <>
       {/* Section 1 */}
-      <Section1 />
+      <SectionSearch />
       {/* End Section 1 */}
 
       {/* Kết quả tìm kiếm */}
-
-      <SectionSearch />
+      <SectionJob />
       {/* Hết Kết quả tìm kiếm */}
     </>
   );

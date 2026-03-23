@@ -3,8 +3,8 @@ import mongoose from "mongoose";
 const schema = new mongoose.Schema(
   {
     jobId: String,
-    fullName: String,
     email: String,
+    userName: String,
     phone: String,
     fileCV: String,
     viewed: {

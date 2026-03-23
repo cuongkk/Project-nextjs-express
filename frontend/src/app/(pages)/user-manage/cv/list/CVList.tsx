@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { FaBriefcase, FaCircleCheck, FaUserTie } from "react-icons/fa6";
 /* eslint-disable @next/next/no-img-element */
+import { Pagination } from "@/app/components/pagination/Pagination";
 
 export const CVList = () => {
   const [listCV, setListCV] = useState<any[]>([]);
@@ -27,8 +28,7 @@ export const CVList = () => {
       });
   }, [page]);
 
-  const handlePagination = (event: any) => {
-    const value = parseInt(event.target.value);
+  const handlePagination = (value: number) => {
     setPage(value);
   };
 
@@ -81,19 +81,7 @@ export const CVList = () => {
         })}
       </div>
 
-      {totalPage > 1 && (
-        <div className="mt-[30px]">
-          <select className="border border-[#DEDEDE] rounded-[8px] py-[12px] px-[18px] font-[400] text-[16px] text-[#414042]" onChange={handlePagination} value={page}>
-            {Array(totalPage)
-              .fill("")
-              .map((_, index) => (
-                <option value={index + 1} key={index}>
-                  Trang {index + 1}
-                </option>
-              ))}
-          </select>
-        </div>
-      )}
+      <Pagination totalPage={totalPage} page={page} onChange={handlePagination} />
     </>
   );
 };

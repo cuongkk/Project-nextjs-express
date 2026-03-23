@@ -40,10 +40,8 @@ export const detail = async (req: Request, res: Response) => {
         jobDetail.companyName = `${accountCompany.companyName}`;
         jobDetail.companyAddress = `${accountCompany.address}`;
         jobDetail.companyLogo = `${accountCompany.logo}`;
-        jobDetail.companyModel = `${accountCompany.companyModel}`;
         jobDetail.companyEmployees = `${accountCompany.companyEmployees}`;
         jobDetail.companyWorkingTime = `${accountCompany.workingTime}`;
-        jobDetail.companyWorkOvertime = `${accountCompany.workOvertime}`;
       }
 
       res.json({

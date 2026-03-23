@@ -5,11 +5,13 @@ import { useForm } from "react-hook-form";
 import { Toaster, toast } from "sonner";
 import { CheckBox } from "@/app/components/checkbox/CheckBox";
 import { useState } from "react";
+import { useAuthContext } from "@/contexts/AuthContext";
 import Link from "next/dist/client/link";
 
 export const FormLogin = () => {
   const router = useRouter();
   const [checked, setChecked] = useState(false);
+  const { setAuth } = useAuthContext();
 
   const {
     register,
@@ -21,7 +23,7 @@ export const FormLogin = () => {
     const dataFinal = {
       email: data.email,
       password: data.password,
-      checked: checked,
+      check: checked,
     };
 
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/company/login`, {
@@ -40,6 +42,7 @@ export const FormLogin = () => {
 
         if (result.code === "success") {
           toast.success(result.message);
+          setAuth({ isLogin: true, infoCompany: result.infoCompany ?? null, infoUser: null });
           router.push("/");
         }
       });

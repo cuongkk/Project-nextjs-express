@@ -122,10 +122,8 @@ export const check = async (req: Request, res: Response) => {
         email: existAccountCompany.email,
         city: existAccountCompany.city,
         address: existAccountCompany.address,
-        companyModel: existAccountCompany.companyModel,
         companyEmployees: existAccountCompany.companyEmployees,
         workingTime: existAccountCompany.workingTime,
-        workOvertime: existAccountCompany.workOvertime,
         phone: existAccountCompany.phone,
         description: existAccountCompany.description,
         logo: existAccountCompany.logo,
@@ -139,7 +137,6 @@ export const check = async (req: Request, res: Response) => {
       return;
     }
 
-    // Không tìm thấy ở cả 2 collection
     res.clearCookie("accessToken");
     res.clearCookie("refreshToken");
     res.json({

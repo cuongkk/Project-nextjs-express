@@ -1,13 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useAuthContext } from "@/contexts/AuthContext";
 
 export const useAuth = () => {
-  const { isLogin, infoUser, infoCompany, isAuthLoaded } = useAuthContext();
+  const ctx = useAuthContext();
 
   return {
-    isLogin,
-    infoUser,
-    infoCompany,
-    isAuthLoaded,
+    ...ctx.state,
+    setAuth: ctx.setAuth,
+    logout: ctx.logout,
   };
 };

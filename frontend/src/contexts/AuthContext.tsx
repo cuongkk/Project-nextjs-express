@@ -8,7 +8,13 @@ type AuthInfo = {
   isAuthLoaded: boolean;
 };
 
-const AuthContext = createContext<AuthInfo | undefined>(undefined);
+type AuthContextValue = {
+  state: AuthInfo;
+  setAuth: (next: Partial<AuthInfo>) => void;
+  logout: () => void;
+};
+
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export const AuthProvider = ({ children, initialAuth }: { children: ReactNode; initialAuth: Partial<AuthInfo> }) => {
   const [state, setState] = useState<AuthInfo>({
@@ -25,22 +31,31 @@ export const AuthProvider = ({ children, initialAuth }: { children: ReactNode; i
       .then((res) => res.json())
       .then((data) => {
         if (data.code === "success") {
-          setState({
+          setState((prev) => ({
+            ...prev,
             isLogin: true,
             infoUser: data.infoUser ?? null,
             infoCompany: data.infoCompany ?? null,
             isAuthLoaded: true,
-          });
+          }));
         } else {
-          setState({ isLogin: false, infoUser: null, infoCompany: null, isAuthLoaded: true });
+          setState((prev) => ({ ...prev, isLogin: false, infoUser: null, infoCompany: null, isAuthLoaded: true }));
         }
       })
       .catch(() => {
-        setState({ isLogin: false, infoUser: null, infoCompany: null, isAuthLoaded: true });
+        setState((prev) => ({ ...prev, isLogin: false, infoUser: null, infoCompany: null, isAuthLoaded: true }));
       });
   }, []);
 
-  return <AuthContext.Provider value={state}>{children}</AuthContext.Provider>;
+  const setAuth = (next: Partial<AuthInfo>) => {
+    setState((prev) => ({ ...prev, ...next }));
+  };
+
+  const logout = () => {
+    setState({ isLogin: false, infoUser: null, infoCompany: null, isAuthLoaded: true });
+  };
+
+  return <AuthContext.Provider value={{ state, setAuth, logout }}>{children}</AuthContext.Provider>;
 };
 
 export const useAuthContext = () => {

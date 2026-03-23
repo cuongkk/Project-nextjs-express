@@ -3,17 +3,35 @@
 
 import { useForm } from "react-hook-form";
 import { Toaster, toast } from "sonner";
+import { applyTermsContent } from "@/configs/variable";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 
 type FormValues = {
-  fullName: string;
+  fileCV: FileList;
+  userName: string;
   email: string;
   phone: string;
-  fileCV: FileList;
+  agree: boolean;
 };
 
 export const FormApply = (props: { jobId: string }) => {
   const { jobId } = props;
 
+  const { isLogin, infoUser } = useAuth();
+  const router = useRouter();
+
+  const [showApplyTerms, setShowApplyTerms] = useState(false);
+  const [files, setFiles] = useState<File[]>([]);
+
+  const handleFiles = (newFiles: FileList | null) => {
+    if (!newFiles) return;
+
+    const fileArray = Array.from(newFiles);
+
+    setFiles((prev) => [...prev, ...fileArray]);
+  };
   const {
     register,
     handleSubmit,
@@ -22,11 +40,17 @@ export const FormApply = (props: { jobId: string }) => {
   } = useForm<FormValues>();
 
   const onSubmit = (data: FormValues) => {
+    if (!isLogin || !infoUser) {
+      toast.error("Vui lòng đăng nhập tài khoản ứng viên trước khi ứng tuyển!");
+      router.push("/user/login");
+      return;
+    }
+
     const file = data.fileCV?.[0];
 
     const formData = new FormData();
     formData.append("jobId", jobId);
-    formData.append("fullName", data.fullName);
+    formData.append("userName", data.userName);
     formData.append("email", data.email);
     formData.append("phone", data.phone);
     if (file) {
@@ -46,6 +70,8 @@ export const FormApply = (props: { jobId: string }) => {
         if (result.code === "success") {
           toast.success(result.message);
           reset();
+          setFiles([]);
+          setShowApplyTerms(false);
         }
       });
   };
@@ -55,45 +81,88 @@ export const FormApply = (props: { jobId: string }) => {
       <Toaster richColors position="top-right" />
       <form onSubmit={handleSubmit(onSubmit) as any} className="" id="applyForm">
         <div className="mb-[15px]">
-          <label htmlFor="fullName" className="block font-[500] text-[14px] text-black mb-[5px]">
-            Họ tên *
+          <label
+            htmlFor="fileCV"
+            className="flex flex-col items-center justify-center border-2 border-dashed p-6 rounded-lg cursor-pointer"
+            onDrop={(e) => {
+              e.preventDefault();
+              handleFiles(e.dataTransfer.files);
+            }}
+            onDragOver={(e) => e.preventDefault()}
+          >
+            <span>Kéo thả nhiều file hoặc bấm để chọn</span>
+
+            <span className="mt-2 px-4 py-2 bg-blue-500 text-white rounded">Chọn tệp</span>
+
+            <input
+              id="fileCV"
+              type="file"
+              multiple
+              accept="application/pdf"
+              className="hidden"
+              {...register("fileCV", {
+                required: "Vui lòng chọn file CV!",
+                validate: {
+                  isPdf: (files: FileList) => {
+                    const file = files?.[0];
+                    if (!file) return "Vui lòng chọn file CV!";
+                    return file.type === "application/pdf" || "File phải là định dạng PDF!";
+                  },
+                  maxSize: (files: FileList) => {
+                    const file = files?.[0];
+                    if (!file) return true;
+                    return file.size <= 5 * 1024 * 1024 || "Dung lượng file không được vượt quá 5MB!";
+                  },
+                },
+              })}
+              onChange={(e) => handleFiles(e.target.files)}
+            />
+            <div className="mt-4 space-y-2 w-full">
+              {files.map((file, index) => (
+                <div key={index} className="flex items-center justify-between border p-2 rounded">
+                  <span className="text-sm truncate">{file.name}</span>
+
+                  <button type="button" className="text-red-500 text-sm" onClick={() => setFiles((prev) => prev.filter((_, i) => i !== index))}>
+                    Xóa
+                  </button>
+                </div>
+              ))}
+            </div>
           </label>
-          <input
-            id="fullName"
-            className="w-[100%] h-[46px] border border-[#DEDEDE] rounded-[4px] px-[20px] font-[500] text-[14px] text-black"
-            {...register("fullName", {
-              required: "Vui lòng nhập họ tên!",
-              minLength: { value: 5, message: "Họ tên phải có ít nhất 5 ký tự!" },
-              maxLength: { value: 50, message: "Họ tên không được vượt quá 50 ký tự!" },
-            })}
-          />
-          {errors.fullName && <p className="text-red-500 text-[13px] mt-[4px]">{errors.fullName.message}</p>}
+          {errors.fileCV && <p className="text-red-500 text-[13px] mt-[4px]">{errors.fileCV.message as string}</p>}
         </div>
-        <div className="mb-[15px]">
-          <label htmlFor="email" className="block font-[500] text-[14px] text-black mb-[5px]">
-            Email *
-          </label>
+        <label className="block mb-[10px]" htmlFor="userName">
+          <input
+            id="userName"
+            type="text"
+            placeholder="Họ và tên"
+            className="w-full h-[46px] border border-[#DEDEDE] rounded-[4px] py-[14px] px-[20px] font-[500] text-[14px] text-black"
+            {...register("userName", { required: "Vui lòng nhập họ tên!" })}
+          />
+          {errors.userName && <p className="text-red-500 text-[13px] mt-[4px]">{errors.userName.message as string}</p>}
+        </label>
+        <label className="block mb-[10px]" htmlFor="email">
           <input
             id="email"
             type="email"
-            className="w-[100%] h-[46px] border border-[#DEDEDE] rounded-[4px] px-[20px] font-[500] text-[14px] text-black"
+            placeholder="Email"
+            className="w-full h-[46px] border border-[#DEDEDE] rounded-[4px] py-[14px] px-[20px] font-[500] text-[14px] text-black"
             {...register("email", {
-              required: "Vui lòng nhập email của bạn!",
+              required: "Vui lòng nhập email!",
               pattern: {
                 value: /^\S+@\S+$/i,
                 message: "Email không đúng định dạng!",
               },
             })}
           />
-          {errors.email && <p className="text-red-500 text-[13px] mt-[4px]">{errors.email.message}</p>}
-        </div>
-        <div className="mb-[15px]">
-          <label htmlFor="phone" className="block font-[500] text-[14px] text-black mb-[5px]">
-            Số điện thoại *
-          </label>
+          {errors.email && <p className="text-red-500 text-[13px] mt-[4px]">{errors.email.message as string}</p>}
+        </label>
+        <label className="block mb-[10px]" htmlFor="phone">
           <input
             id="phone"
-            className="w-[100%] h-[46px] border border-[#DEDEDE] rounded-[4px] px-[20px] font-[500] text-[14px] text-black"
+            type="text"
+            placeholder="Số điện thoại"
+            className="w-full h-[46px] border border-[#DEDEDE] rounded-[4px] py-[14px] px-[20px] font-[500] text-[14px] text-black"
             {...register("phone", {
               required: "Vui lòng nhập số điện thoại!",
               pattern: {
@@ -102,37 +171,29 @@ export const FormApply = (props: { jobId: string }) => {
               },
             })}
           />
-          {errors.phone && <p className="text-red-500 text-[13px] mt-[4px]">{errors.phone.message}</p>}
-        </div>
-        <div className="mb-[15px]">
-          <label htmlFor="fileCV" className="block font-[500] text-[14px] text-black mb-[5px]">
-            File CV dạng PDF *
+          {errors.phone && <p className="text-red-500 text-[13px] mt-[4px]">{errors.phone.message as string}</p>}
+        </label>
+        <div className="mb-[15px] flex items-center gap-[8px]">
+          <input id="agree" type="checkbox" className="w-[16px] h-[16px]" {...register("agree", { required: "Vui lòng đồng ý điều khoản sử dụng trước khi nộp hồ sơ!" })} />
+          <label htmlFor="agree" className="font-[400] text-[14px] text-[#121212]">
+            Tôi đồng ý với
+            <button type="button" onClick={() => setShowApplyTerms((prev) => !prev)} className="ml-[4px] text-primary underline underline-offset-2">
+              Điều khoản sử dụng
+            </button>
+            <span> </span>của hệ thống.
           </label>
-          <input
-            id="fileCV"
-            type="file"
-            accept="application/pdf"
-            className=""
-            {...register("fileCV", {
-              required: "Vui lòng chọn file CV!",
-              validate: {
-                isPdf: (files: FileList) => {
-                  const file = files?.[0];
-                  if (!file) return "Vui lòng chọn file CV!";
-                  return file.type === "application/pdf" || "File phải là định dạng PDF!";
-                },
-                maxSize: (files: FileList) => {
-                  const file = files?.[0];
-                  if (!file) return true;
-                  return file.size <= 5 * 1024 * 1024 || "Dung lượng file không được vượt quá 5MB!";
-                },
-              },
-            })}
-          />
-          {errors.fileCV && <p className="text-red-500 text-[13px] mt-[4px]">{errors.fileCV.message as string}</p>}
         </div>
+        {errors.agree && <p className="text-red-500 text-[13px] mt-[-8px] mb-[8px]">{errors.agree.message as string}</p>}
+        {showApplyTerms && (
+          <div className=" flex items-center justify-center">
+            <div className="bg-white rounded-[8px] mb-[10px] max-w-[600px] max-h-[80vh] overflow-y-auto">
+              <h2 className="font-[700] text-[18px] text-[#121212] mb-[12px]">Điều khoản sử dụng</h2>
+              <p className="font-[400] text-[14px] text-[#121212] whitespace-pre-line">{applyTermsContent}</p>
+            </div>
+          </div>
+        )}
         <button type="submit" className="w-[100%] h-[48px] rounded-[4px] bg-primary font-[700] text-[16px] text-white">
-          Gửi CV ứng tuyển
+          Nộp hồ sơ ứng tuyển
         </button>
       </form>
     </>

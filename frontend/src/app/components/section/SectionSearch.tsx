@@ -1,17 +1,44 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FaMagnifyingGlass } from "react-icons/fa6";
 
-export const Section1 = () => {
+export const SectionSearch = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const handleSearch = (event: any) => {
     event.preventDefault();
     const city = event.target.city.value;
     const keyword = event.target.keyword.value;
-    router.push(`/search?city=${city}&keyword=${keyword}`);
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (city) {
+      params.set("city", city);
+    } else {
+      params.delete("city");
+    }
+
+    if (keyword) {
+      params.set("keyword", keyword);
+    } else {
+      params.delete("keyword");
+    }
+
+    router.push(`/search?${params.toString()}`);
+  };
+
+  const handleSearchTech = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (value) {
+      params.set("technologies", value);
+    } else {
+      params.delete("technologies");
+    }
+
+    router.push(`/search?${params.toString()}`);
   };
 
   return (
@@ -35,24 +62,24 @@ export const Section1 = () => {
           <div className="flex gap-x-[12px] gap-y-[15px] items-center flex-wrap">
             <div className="font-[500] text-[16px] text-[#DEDEDE]">Mọi người đang tìm kiếm:</div>
             <div className="flex flex-wrap gap-[10px]">
-              <Link
-                href="/search?language=reactjs"
+              <button
+                onClick={() => handleSearchTech("reactJS")}
                 className="rounded-[20px] bg-[#121212] hover:bg-[#414042] border-[1px] border-[#414042] py-[8px] px-[22px] font-[500] text-[16px] text-[#DEDEDE] hover:text-[#FFFFFF] inline-block"
               >
                 ReactJS
-              </Link>
-              <Link
-                href="/search?language=javascript"
+              </button>
+              <button
+                onClick={() => handleSearchTech("javascript")}
                 className="rounded-[20px] bg-[#121212] hover:bg-[#414042] border-[1px] border-[#414042] py-[8px] px-[22px] font-[500] text-[16px] text-[#DEDEDE] hover:text-[#FFFFFF] inline-block"
               >
                 Javascript
-              </Link>
-              <Link
-                href="/search?language=nodejs"
+              </button>
+              <button
+                onClick={() => handleSearchTech("nodeJS")}
                 className="rounded-[20px] bg-[#121212] hover:bg-[#414042] border-[1px] border-[#414042] py-[8px] px-[22px] font-[500] text-[16px] text-[#DEDEDE] hover:text-[#FFFFFF] inline-block"
               >
                 NodeJS
-              </Link>
+              </button>
             </div>
           </div>
         </div>

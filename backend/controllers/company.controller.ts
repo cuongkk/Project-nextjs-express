@@ -43,14 +43,13 @@ export const registerPost = async (req: Request, res: Response) => {
 };
 
 export const loginPost = async (req: Request, res: Response) => {
-  const { email, password, checked, rememberMe } = req.body as {
+  const { email, password, check } = req.body as {
     email: string;
     password: string;
-    checked?: boolean | string;
-    rememberMe?: boolean | string;
+    check?: boolean | string;
   };
 
-  const isRemember = checked === true || checked === "true" || rememberMe === true || rememberMe === "true";
+  const isRemember = check === true || check === "true";
 
   const existAccount = await AccountCompany.findOne({
     email: email,
@@ -118,6 +117,12 @@ export const loginPost = async (req: Request, res: Response) => {
   res.json({
     code: "success",
     message: "Đăng nhập thành công!",
+    infoCompany: {
+      id: existAccount.id,
+      companyName: existAccount.companyName,
+      email: existAccount.email,
+      logo: existAccount.logo ?? null,
+    },
   });
 };
 
@@ -511,10 +516,8 @@ export const detail = async (req: Request, res: Response) => {
         logo: record.logo,
         companyName: record.companyName,
         address: record.address,
-        companyModel: record.companyModel,
         companyEmployees: record.companyEmployees,
         workingTime: record.workingTime,
-        workOvertime: record.workOvertime,
         description: record.description,
       };
 
@@ -604,8 +607,8 @@ export const listCV = async (req: AccountRequest, res: Response) => {
     const dataItemFinal: any = {
       id: item.id,
       jobTitle: "",
-      fullName: item.fullName,
       email: item.email,
+      userName: item.userName,
       phone: item.phone,
       jobSalaryMin: 0,
       jobSalaryMax: 0,
@@ -669,9 +672,7 @@ export const detailCV = async (req: AccountRequest, res: Response) => {
     }
 
     const dataFinalCV = {
-      fullName: infoCV.fullName,
       email: infoCV.email,
-      phone: infoCV.phone,
       fileCV: infoCV.fileCV,
     };
 

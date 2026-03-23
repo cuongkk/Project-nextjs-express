@@ -86,6 +86,7 @@ export const loginPost = async (req: Request, res: Response, next: NextFunction)
         "password.number": "Mật khẩu phải chứa chữ số!",
         "password.special": "Mật khẩu phải chứa ký tự đặc biệt!",
       }),
+    check: Joi.alternatives().try(Joi.boolean(), Joi.string()).optional(),
   });
 
   const { error } = schema.validate(req.body);
