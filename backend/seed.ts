@@ -2,14 +2,14 @@ import "dotenv/config";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import { connectDB } from "./configs/database.config";
-import AccountUser from "./models/account-user.model";
-import AccountCompany from "./models/account-company.model";
-import Job from "./models/job.model";
-import CV from "./models/cv.model";
+import AccountUser from "./modules/user/user.model";
+import AccountCompany from "./modules/company/company.model";
+import Job from "./modules/job/job.model";
+import CV from "./modules/cv/cv.model";
 import Application from "./models/application.model";
-import SavedJob from "./models/saved-job.model";
+import SavedJob from "./modules/user/saved-job.model";
 import Notification from "./models/notification.model";
-import City from "./models/city.model";
+import City from "./modules/city/city.model";
 
 /// npx ts-node seed.ts
 const run = async () => {

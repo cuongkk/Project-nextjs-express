@@ -13,4 +13,10 @@ export const PAGINATION = {
 
   // Số item mỗi trang cho kết quả tìm kiếm job
   SEARCH_JOB_PAGE_SIZE: 2,
+
+  // Số item mỗi trang cho danh sách đơn ứng tuyển của user
+  COMPANY_APPLICATION_PAGE_SIZE: 12,
+
+  // Số item mỗi trang cho danh sách đơn ứng tuyển của company
+  USER_APPLICATION_PAGE_SIZE: 6,
 };

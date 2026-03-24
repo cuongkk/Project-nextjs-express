@@ -1,9 +1,9 @@
 import { Router } from "express";
-import * as userController from "../controllers/user.controller";
-import * as userValidate from "../validates/user.validate";
+import * as userController from "./user.controller";
+import * as userValidate from "../../validates/user.validate";
 import multer from "multer";
-import { storage } from "../utils/cloudinary.helper";
-import * as authMiddleware from "../middlewares/auth.middleware";
+import { storage } from "../../utils/cloudinary.helper";
+import * as authMiddleware from "../../middlewares/auth.middleware";
 
 const router = Router();
 
@@ -20,7 +20,5 @@ router.post("/reset-password", userValidate.resetPasswordPost, userController.re
 router.patch("/profile", authMiddleware.verifyTokenUser, upload.single("avatar"), userController.profilePatch);
 
 router.patch("/change-password", authMiddleware.verifyTokenUser, userController.changePasswordPatch);
-
-router.get("/cv/list", authMiddleware.verifyTokenUser, userController.listCV);
 
 export default router;

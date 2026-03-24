@@ -1,8 +1,8 @@
 import { NextFunction, Response } from "express";
 import jwt from "jsonwebtoken";
-import AccountUser from "../models/account-user.model";
+import AccountUser from "../modules/user/user.model";
 import { AccountRequest } from "../interfaces/request.interface";
-import AccountCompany from "../models/account-company.model";
+import AccountCompany from "../modules/company/company.model";
 
 export const verifyTokenUser = async (req: AccountRequest, res: Response, next: NextFunction) => {
   try {

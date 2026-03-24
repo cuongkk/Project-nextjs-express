@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Header } from "./components/header/Header";
-import { Footer } from "./components/footer/Footer";
+import { Header } from "../components/layout/Header";
+import { Footer } from "../components/footer/Footer";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { cookies } from "next/headers";
 
