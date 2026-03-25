@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Header } from "../components/layout/Header";
-import { Footer } from "../components/footer/Footer";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { cookies } from "next/headers";
+import { Footer } from "../components/layout/Footer";
+import ToastProvider from "../components/ui/ToastProvider";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -15,24 +14,13 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cookieStore = cookies();
-  const token = (await cookieStore).get("token");
-
-  const initialAuth = {
-    isLogin: !!token,
-    infoUser: null,
-    infoCompany: null,
-    isAuthLoaded: false,
-  };
-
   return (
     <html lang="vi" suppressHydrationWarning>
       <body className="flex flex-col min-h-screen">
-        <AuthProvider initialAuth={initialAuth}>
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </AuthProvider>
+        <ToastProvider />
+        <Header />
+        <main className="flex-1">{children}</main>
+        <Footer />
       </body>
     </html>
   );

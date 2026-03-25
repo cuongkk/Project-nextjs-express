@@ -1,5 +1,5 @@
-import { SectionJob } from "@/components/layout/SectionJob";
-import { SectionSearch } from "@/components/layout/SectionSearch";
+import { SectionJob } from "@/components/features/application/SectionJob";
+import { SectionSearch } from "@/components/features/application/SectionSearch";
 
 export default function Page() {
   return (

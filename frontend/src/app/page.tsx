@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
-import { SectionSearch } from "@/components/layout/SectionSearch";
-import { SectionJob } from "@/components/layout/SectionJob";
+import { SectionSearch } from "@/components/features/application/SectionSearch";
+import { SectionJob } from "@/components/features/application/SectionJob";
 
 import Link from "next/link";
 import { FaUserTie } from "react-icons/fa6";

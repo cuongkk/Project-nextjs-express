@@ -1,8 +1,8 @@
 import express, { Request, Response } from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-import routes from "./routes/index.route";
-import { connectDB } from "./configs/database.config";
+import routes from "./src/routes/index.route";
+import { connectDB } from "./src/configs/database.config";
 import cookieParser from "cookie-parser";
 
 // Load biến môi trường từ file .env

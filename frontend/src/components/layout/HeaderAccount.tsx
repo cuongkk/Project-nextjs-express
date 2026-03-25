@@ -6,21 +6,10 @@ export const HeaderAccount = () => {
   const { isLogin, infoUser, infoCompany, isAuthLoaded, logout } = useAuth();
   const router = useRouter();
 
-  const handleLogout = (url: string) => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
-      credentials: "include", // Gửi kèm cookie
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.code == "success") {
-          logout();
-          router.push(url);
-        }
-      });
+  const handleLogout = async () => {
+    await logout();
+    router.push("/");
   };
-  if (!isAuthLoaded) {
-    return null;
-  }
   return (
     <>
       {isLogin ? (
@@ -28,27 +17,27 @@ export const HeaderAccount = () => {
           {/* Đã đăng nhập user */}
           {infoUser && (
             <div className="font-[600] sm:text-[16px] text-[12px] text-white relative group/sub-1 z-10">
-              <Link className="" href="/user-manage/profile">
+              <Link className="" href="/profile">
                 {infoUser?.fullName || "Tài khoản"}
               </Link>
               <ul className="bg-[#000065] rounded-[4px] absolute top-[100%] right-0 w-[200px] hidden group-hover/sub-1:block">
                 <li className="py-[10px] px-[16px] flex items-center justify-between hover:bg-[#000096] rounded-[4px] group/sub-2">
-                  <Link className="font-[600] text-[16px] text-white" href="/user-manage/profile">
+                  <Link className="font-[600] text-[16px] text-white" href="/profile">
                     Thông tin cá nhân
                   </Link>
                 </li>
                 <li className="py-[10px] px-[16px] flex items-center justify-between hover:bg-[#000096] rounded-[4px] group/sub-2">
-                  <Link className="font-[600] text-[16px] text-white" href="/user-manage/change-password">
+                  <Link className="font-[600] text-[16px] text-white" href="/changepassword">
                     Đổi mật khẩu
                   </Link>
                 </li>
                 <li className="py-[10px] px-[16px] flex items-center justify-between hover:bg-[#000096] rounded-[4px] group/sub-2">
-                  <Link className="font-[600] text-[16px] text-white" href="/user-manage/cv/list">
+                  <Link className="font-[600] text-[16px] text-white" href="/cv">
                     Quản lý CV
                   </Link>
                 </li>
                 <li className="py-[10px] px-[16px] flex items-center justify-between hover:bg-[#000096] rounded-[4px] group/sub-2">
-                  <button className="font-[600] text-[16px] text-white" onClick={() => handleLogout("/user/login")}>
+                  <button className="font-[600] text-[16px] text-white" onClick={() => handleLogout()}>
                     Đăng xuất
                   </button>
                 </li>
@@ -78,7 +67,7 @@ export const HeaderAccount = () => {
                   </Link>
                 </li>
                 <li className="py-[10px] px-[16px] flex items-center justify-between hover:bg-[#000096] rounded-[4px] group/sub-2">
-                  <button className="font-[600] text-[16px] text-white cursor-pointer" onClick={() => handleLogout("/company/login")}>
+                  <button className="font-[600] text-[16px] text-white cursor-pointer" onClick={() => handleLogout()}>
                     Đăng xuất
                   </button>
                 </li>
@@ -90,11 +79,11 @@ export const HeaderAccount = () => {
         <>
           {/* Chưa đăng nhập */}
           <div className="font-[600] sm:text-[16px] text-[12px] text-white">
-            <Link href="/user/login" className="">
+            <Link href="/login" className="">
               Đăng Nhập
             </Link>
             <span className=""> / </span>
-            <Link href="/user/register" className="">
+            <Link href="/register" className="">
               Đăng Ký
             </Link>
           </div>

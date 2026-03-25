@@ -1,15 +1,15 @@
 import "dotenv/config";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
-import { connectDB } from "./configs/database.config";
-import AccountUser from "./modules/user/user.model";
-import AccountCompany from "./modules/company/company.model";
-import Job from "./modules/job/job.model";
-import CV from "./modules/cv/cv.model";
-import Application from "./models/application.model";
-import SavedJob from "./modules/user/saved-job.model";
-import Notification from "./models/notification.model";
-import City from "./modules/city/city.model";
+import { connectDB } from "./src/configs/database.config";
+import AccountUser from "./src/modules/user/user.model";
+import AccountCompany from "./src/modules/company/company.model";
+import Job from "./src/modules/job/job.model";
+import CV from "./src/modules/cv/cv.model";
+import Application from "./src/modules/application/application.model";
+import SavedJob from "./src/modules/user/saved-job.model";
+import Notification from "./src/modules/notificaion/notification.model";
+import City from "./src/modules/city/city.model";
 
 /// npx ts-node seed.ts
 const run = async () => {
@@ -47,7 +47,7 @@ const run = async () => {
       city: hanoiCity._id.toString(),
       address: "Số 1 Trần Duy Hưng",
       companyEmployees: "50-100",
-      workingTime: "8:30 - 17:30",
+      workingTime: "8:30 - 17:30 (Thứ 2 - Thứ 6)",
       phone: "02466668888",
       description: "Công ty chuyên phát triển sản phẩm phần mềm.",
       logo: "https://placehold.co/120x120",
@@ -61,6 +61,7 @@ const run = async () => {
       position: "middle",
       workingForm: "full-time",
       technologies: ["javaScript", "typeScript", "react", "next.js"],
+      city: hanoiCity._id.toString(),
       description: "Phát triển giao diện web sử dụng React/Next.js.",
       images: [],
     });

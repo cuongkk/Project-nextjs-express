@@ -13,7 +13,7 @@ export const EditorMCE = (props: { editorRef: any; value: string; id: string }) 
           height: 500,
           plugins: ["anchor", "link", "charmap", "image", "lists", "media"],
           toolbar: `undo redo | styles | bold italic | alignleft aligncenter alignright alignjustify | outdent indent | link anchor charmap image numlist bullist media`,
-          images_upload_url: `${process.env.NEXT_PUBLIC_API_URL}/upload/image`,
+          images_upload_url: `${process.env.NEXT_PUBLIC_API_URL}/uploads`,
         }}
         id={id}
       />
