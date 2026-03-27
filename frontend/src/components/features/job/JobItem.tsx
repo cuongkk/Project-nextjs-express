@@ -6,14 +6,10 @@ import { FaBriefcase, FaLocationDot, FaUserTie } from "react-icons/fa6";
 
 export const JobItem = (props: { item: any }) => {
   const { item } = props;
-
-  const position = positionList.find((pos: any) => pos.value === item.position);
-  const workingForm = workingFormList.find((work: any) => work.value === item.workingForm);
-
   return (
     <>
-      <div className="rounded-[8px] border-[1px] border-[#DEDEDE] card-item relative overflow-hidden h-[125px] z-0">
-        <div className="p-[10px] flex flex-col gap-y-[5px]">
+      <div className="relative overflow-hidden h-[125px] z-0">
+        <div className="rounded-[8px] border-[1px] border-[#DEDEDE] card-item p-[10px] flex flex-col gap-y-[5px]">
           <div className=" flex flex-row items-center gap-x-[20px]">
             <div className="h-[64px] aspect-[1/1] rounded-[8px] bg-white p-[2px] inner-image text-left">
               <Link href={`/job/${item.id}`}>
@@ -39,10 +35,10 @@ export const JobItem = (props: { item: any }) => {
             </div>
           </div>
           <div className="flex flex-row items-center gap-x-[12px]">
-            <div className="rounded-[10px] border-[1px] border-[#DEDEDE] p-[4px] font-[600] text-[14px] text-[#121212] mb-[8px] text-center">
+            <div className="rounded-[10px] border-[1px] border-[#DEDEDE] p-[4px] font-[600] text-[14px] text-[#121212] text-center">
               {item.salaryMin.toLocaleString("vi-VN")} - {item.salaryMax.toLocaleString("vi-VN")} triệu
             </div>
-            <div className="rounded-[10px] border-[1px] border-[#DEDEDE] p-[4px] font-[600] text-[14px] text-[#121212] mb-[8px] text-center"> {item.companyCity}</div>
+            <div className="rounded-[10px] border-[1px] border-[#DEDEDE] p-[4px] font-[600] text-[14px] text-[#121212] text-center"> {item.companyCity}</div>
           </div>
         </div>
       </div>

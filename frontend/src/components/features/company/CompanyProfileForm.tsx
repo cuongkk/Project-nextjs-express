@@ -14,7 +14,6 @@ import "filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css";
 import { EditorMCE } from "@/components/ui/EditorMCE";
 import { setReloadToast } from "@/utils/toast.helper";
 
-// Register the plugin
 registerPlugin(FilePondPluginFileValidateType, FilePondPluginImagePreview);
 
 export const CompanyProfileForm = () => {
@@ -44,7 +43,7 @@ export const CompanyProfileForm = () => {
   useEffect(() => {
     if (!isAuthLoaded) return;
     if (!isLogin) {
-      router.replace("/auth/login");
+      router.replace("/login");
     }
   }, [isAuthLoaded, isLogin, router]);
 
@@ -58,18 +57,28 @@ export const CompanyProfileForm = () => {
         },
       ]);
     }
-    // Set giá trị mặc định cho form
+
     setValue("companyName", infoCompany.companyName || "");
-    setValue("city", infoCompany.city || "");
+
+    if (infoCompany.city && cityList.length > 0) {
+      const matchedCity = cityList.find((item) => item._id === infoCompany.city || item.name === infoCompany.city);
+      if (matchedCity) {
+        setValue("city", matchedCity._id);
+      } else {
+        setValue("city", "");
+      }
+    } else {
+      setValue("city", "");
+    }
+
     setValue("address", infoCompany.address || "");
-    setValue("companyModel", infoCompany.companyModel || "");
     setValue("companyEmployees", infoCompany.companyEmployees || "");
     setValue("workingTime", infoCompany.workingTime || "");
     setValue("workOvertime", infoCompany.workOvertime || "");
     setValue("email", infoCompany.email || "");
     setValue("phone", infoCompany.phone || "");
     setValue("description", infoCompany.description || "");
-  }, [infoCompany, setValue]);
+  }, [infoCompany, cityList, setValue]);
 
   const onSubmit = (data: any) => {
     const formData = new FormData();
@@ -80,21 +89,20 @@ export const CompanyProfileForm = () => {
       formData.append("logo", logos[0].file);
     }
 
-    if (data.city) formData.append("city", data.city);
-    if (data.address) formData.append("address", data.address);
-    if (data.companyModel) formData.append("companyModel", data.companyModel);
-    if (data.companyEmployees) formData.append("companyEmployees", data.companyEmployees);
-    if (data.workingTime) formData.append("workingTime", data.workingTime);
-    if (data.workOvertime) formData.append("workOvertime", data.workOvertime);
+    formData.append("city", data.city);
+    formData.append("address", data.address);
+    formData.append("companyModel", data.companyModel);
+    formData.append("companyEmployees", data.companyEmployees);
+    formData.append("workingTime", data.workingTime);
     formData.append("email", data.email);
-    if (data.phone) formData.append("phone", data.phone);
+    formData.append("phone", data.phone);
     let description = "";
     if (editorRef.current) {
       description = (editorRef.current as any).getContent();
     }
     formData.append("description", description);
 
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/companies/me`, {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/companies/profile`, {
       method: "PATCH",
       body: formData,
       credentials: "include", // Gửi kèm cookie
@@ -111,7 +119,6 @@ export const CompanyProfileForm = () => {
         }
       });
   };
-
   return (
     <>
       {infoCompany && (
@@ -156,17 +163,7 @@ export const CompanyProfileForm = () => {
             </label>
             <input id="address" type="text" className="w-[100%] h-[46px] border border-[#DEDEDE] rounded-[4px] py-[14px] px-[20px] font-[500] text-[14px] text-black" {...register("address")} />
           </div>
-          <div className="">
-            <label htmlFor="companyModel" className="block font-[500] text-[14px] text-black mb-[5px]">
-              Mô hình công ty
-            </label>
-            <input
-              id="companyModel"
-              type="text"
-              className="w-[100%] h-[46px] border border-[#DEDEDE] rounded-[4px] py-[14px] px-[20px] font-[500] text-[14px] text-black"
-              {...register("companyModel")}
-            />
-          </div>
+
           <div className="">
             <label htmlFor="companyEmployees" className="block font-[500] text-[14px] text-black mb-[5px]">
               Quy mô công ty
@@ -187,17 +184,6 @@ export const CompanyProfileForm = () => {
               type="text"
               className="w-[100%] h-[46px] border border-[#DEDEDE] rounded-[4px] py-[14px] px-[20px] font-[500] text-[14px] text-black"
               {...register("workingTime")}
-            />
-          </div>
-          <div className="">
-            <label htmlFor="workOvertime" className="block font-[500] text-[14px] text-black mb-[5px]">
-              Làm việc ngoài giờ
-            </label>
-            <input
-              id="workOvertime"
-              type="text"
-              className="w-[100%] h-[46px] border border-[#DEDEDE] rounded-[4px] py-[14px] px-[20px] font-[500] text-[14px] text-black"
-              {...register("workOvertime")}
             />
           </div>
           <div className="">

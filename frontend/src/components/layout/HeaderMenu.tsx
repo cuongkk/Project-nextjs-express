@@ -78,24 +78,6 @@ export const HeaderMenu = (props: { showMenu: boolean }) => {
         },
       ],
     },
-    {
-      name: "Nhà Tuyển Dụng",
-      link: "#",
-      isLogin: false,
-
-      children: [
-        {
-          name: "Đăng Nhập",
-          link: "/auth/login",
-          children: null,
-        },
-        {
-          name: "Đăng Ký",
-          link: "/auth/register",
-          children: null,
-        },
-      ],
-    },
   ];
   return (
     <>

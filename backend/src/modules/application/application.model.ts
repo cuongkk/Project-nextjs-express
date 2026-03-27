@@ -6,12 +6,10 @@ const schema = new mongoose.Schema(
     companyId: String,
     jobId: String,
     cvId: String,
-    coverLetter: String,
     status: {
       type: String,
-      default: "pending", // pending, viewed, interviewing, accepted, rejected
+      default: "initial",
     },
-    notes: String,
     viewedByCompany: {
       type: Boolean,
       default: false,

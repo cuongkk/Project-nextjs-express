@@ -1,6 +1,6 @@
 import { Router } from "express";
 import * as userController from "./user.controller";
-import * as userValidate from "../../validates/user.validate";
+import * as userValidate from "./user.validate";
 import multer from "multer";
 import { storage } from "../../utils/cloudinary.helper";
 import * as authMiddleware from "../../middlewares/auth.middleware";

@@ -2,8 +2,15 @@ import { Request, Response } from "express";
 import { AccountRequest } from "../../interfaces/request.interface";
 import * as jobService from "./job.service";
 
-export const list = async (_req: Request, res: Response) => {
-  const result = await jobService.list();
+export const list = async (req: AccountRequest, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({
+      code: "error",
+      message: "Unauthorized",
+    });
+  }
+
+  const result = await jobService.list(req.user.id);
   res.json(result);
 };
 

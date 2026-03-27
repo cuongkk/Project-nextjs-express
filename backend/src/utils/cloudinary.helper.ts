@@ -10,7 +10,14 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Tạo cấu hình lưu trữ trên Cloudinary
 export const storage = new CloudinaryStorage({
   cloudinary,
+  params: async (_req, file) => {
+    const isPdf = file.mimetype === "application/pdf";
+
+    return {
+      folder: "project-6",
+      resource_type: isPdf ? "raw" : "image",
+    };
+  },
 });

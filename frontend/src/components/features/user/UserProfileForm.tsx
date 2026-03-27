@@ -34,7 +34,7 @@ export const UserProfileForm = () => {
   useEffect(() => {
     if (!isAuthLoaded) return;
     if (!isLogin) {
-      router.replace("/auth/login");
+      router.replace("/login");
     }
   }, [isAuthLoaded, isLogin, router]);
 
@@ -80,7 +80,7 @@ export const UserProfileForm = () => {
       formData.append("avatar", avatars[0].file);
     }
 
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/profile`, {
       method: "PATCH",
       body: formData,
       credentials: "include",

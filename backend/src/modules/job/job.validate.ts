@@ -24,8 +24,10 @@ const jobSchema = Joi.object({
     "string.empty": "Vui lòng nhập hình thức làm việc!",
     "string.max": "Hình thức làm việc tối đa 100 ký tự!",
   }),
-  technologies: Joi.string().max(500).allow("", null).optional().messages({
-    "string.max": "Công nghệ tối đa 500 ký tự!",
+  technologies: Joi.array().items(Joi.string().max(50)).max(20).optional().messages({
+    "array.base": "Công nghệ phải là danh sách!",
+    "array.max": "Tối đa 20 công nghệ!",
+    "string.max": "Tên công nghệ tối đa 50 ký tự!",
   }),
   description: Joi.string().allow("", null).optional(),
 }).unknown(true);

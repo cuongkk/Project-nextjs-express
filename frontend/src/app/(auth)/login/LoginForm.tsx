@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { CheckBox } from "@/components/ui/CheckBox";
 import { useState } from "react";
 import { setReloadToast } from "@/utils/toast.helper";
+import { mutate } from "swr/_internal";
 
 export const LoginForm = () => {
   const [checked, setChecked] = useState(false);
@@ -34,12 +35,13 @@ export const LoginForm = () => {
       credentials: "include",
     })
       .then((res) => res.json())
-      .then((result) => {
+      .then(async (result) => {
         if (result.code === "error") {
           setReloadToast(result.code, result.message);
         }
 
         if (result.code === "success") {
+          await mutate(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`);
           setReloadToast(result.code, result.message);
           router.push("/");
         }
@@ -91,7 +93,7 @@ export const LoginForm = () => {
             <CheckBox checked={checked} onChange={setChecked} />
             <span className="font-[500] text-[14px] text-black">Ghi nhớ đăng nhập</span>
           </div>
-          <Link href="/auth/forgot-password">
+          <Link href="/forgot-password">
             <div className="font-[500] text-[14px] text-[#0088FF]">Quên mật khẩu?</div>
           </Link>
         </div>

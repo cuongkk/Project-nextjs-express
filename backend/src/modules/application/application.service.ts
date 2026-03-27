@@ -5,16 +5,14 @@ import AccountCompany from "../company/company.model";
 import CV from "../cv/cv.model";
 import { PAGINATION } from "../../configs/variable.config";
 
-// Create a new application (apply to a job)
 export const apply = async (req: AccountRequest & { file?: any }) => {
   const userId = req.account.id;
-  const { jobId, cvId, email, userName, phone, coverLetter } = req.body as {
+  const { jobId, cvId, email, userName, phone } = req.body as {
     jobId: string;
     cvId?: string;
     email?: string;
     userName?: string;
     phone?: string;
-    coverLetter?: string;
   };
 
   const job = await Job.findById(jobId);
@@ -29,7 +27,6 @@ export const apply = async (req: AccountRequest & { file?: any }) => {
 
   let finalCvId = cvId;
 
-  // Nếu không truyền cvId, tạo mới CV từ thông tin gửi kèm (backward-compatible với flow cũ)
   if (!finalCvId) {
     if (!email || !userName || !phone) {
       return { code: "error", message: "Thiếu thông tin CV để ứng tuyển!" };
@@ -47,7 +44,6 @@ export const apply = async (req: AccountRequest & { file?: any }) => {
 
     finalCvId = cv._id.toString();
   } else {
-    // Đảm bảo CV thuộc về đúng người dùng (dựa theo email lưu trong CV)
     const cv = await CV.findOne({ _id: finalCvId, email });
     if (!cv) {
       return { code: "error", message: "CV không hợp lệ hoặc không thuộc về tài khoản hiện tại!" };
@@ -59,7 +55,6 @@ export const apply = async (req: AccountRequest & { file?: any }) => {
     companyId,
     jobId,
     cvId: finalCvId,
-    coverLetter: coverLetter ?? "",
   });
 
   return {
@@ -70,8 +65,15 @@ export const apply = async (req: AccountRequest & { file?: any }) => {
 
 export const userList = async (req: AccountRequest) => {
   const userId = req.account.id;
+  const find: any = { userId };
 
-  const find = { userId };
+  const statusParam = (req.query.status as string) || "";
+  if (["initial", "approved", "rejected"].includes(statusParam)) {
+    find.status = statusParam;
+  }
+
+  const sortParam = (req.query.sort as string) || "newest";
+  const sortDirection = sortParam === "oldest" ? "asc" : "desc";
 
   const limitItems = PAGINATION.USER_APPLICATION_PAGE_SIZE ?? 10;
   let page = 1;
@@ -83,7 +85,7 @@ export const userList = async (req: AccountRequest) => {
   const totalPage = Math.ceil(totalRecord / limitItems) || 1;
   const skip = (page - 1) * limitItems;
 
-  const applications = await Application.find(find).sort({ createdAt: "desc" }).limit(limitItems).skip(skip);
+  const applications = await Application.find(find).sort({ createdAt: sortDirection }).limit(limitItems).skip(skip);
 
   const dataFinal: any[] = [];
 
@@ -135,8 +137,20 @@ export const userDetail = async (req: AccountRequest) => {
 
 export const companyList = async (req: AccountRequest) => {
   const companyId = req.account.id;
+  const find: any = { companyId };
 
-  const find = { companyId };
+  const statusParam = (req.query.status as string) || "";
+  if (["initial", "approved", "rejected"].includes(statusParam)) {
+    find.status = statusParam;
+  }
+
+  const jobIdParam = (req.query.jobId as string) || "";
+  if (jobIdParam) {
+    find.jobId = jobIdParam;
+  }
+
+  const sortParam = (req.query.sort as string) || "newest";
+  const sortDirection = sortParam === "oldest" ? "asc" : "desc";
 
   const limitItems = PAGINATION.COMPANY_APPLICATION_PAGE_SIZE ?? 10;
   let page = 1;
@@ -148,7 +162,7 @@ export const companyList = async (req: AccountRequest) => {
   const totalPage = Math.ceil(totalRecord / limitItems) || 1;
   const skip = (page - 1) * limitItems;
 
-  const applications = await Application.find(find).sort({ createdAt: "desc" }).limit(limitItems).skip(skip);
+  const applications = await Application.find(find).sort({ createdAt: sortDirection }).limit(limitItems).skip(skip);
 
   const dataFinal: any[] = [];
 
@@ -214,9 +228,6 @@ export const companyChangeStatus = async (req: AccountRequest) => {
   }
 
   app.status = status;
-  if (notes !== undefined) {
-    app.notes = notes;
-  }
   await app.save();
 
   return { code: "success", message: "Cập nhật trạng thái thành công!" };

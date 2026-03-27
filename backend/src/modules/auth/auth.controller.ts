@@ -159,70 +159,14 @@ export const changePassword = async (req: AccountRequest, res: Response) => {
   }
 };
 
-export const me = async (req: AccountRequest, res: Response) => {
+export const me = async (req: any, res: Response) => {
   try {
-    const userPayload: any = (req as any).user;
-    const account: any = (req as any).account;
+    const userPayload = req.user;
+    const account = req.account;
 
-    if (!userPayload || !account) {
-      return res.status(401).json({
-        code: "error",
-        message: "Vui lòng đăng nhập!",
-      });
-    }
+    const result = await authService.me(userPayload, account);
 
-    const raw = typeof account.toObject === "function" ? account.toObject() : account;
-
-    if (raw.password) {
-      delete raw.password;
-    }
-
-    if (userPayload.role === "user") {
-      return res.json({
-        code: "success",
-        infoUser: {
-          fullName: raw.fullName,
-          email: raw.email,
-          phone: raw.phone,
-          birthday: raw.birthday,
-          gender: raw.gender,
-          address: raw.address,
-          experienceYears: raw.experienceYears,
-          currentPosition: raw.currentPosition,
-          desiredPosition: raw.desiredPosition,
-          skills: raw.skills,
-          education: raw.education,
-          socials: raw.socials,
-          avatar: raw.avatar,
-        },
-        infoCompany: null,
-      });
-    }
-
-    if (userPayload.role === "company") {
-      return res.json({
-        code: "success",
-        infoUser: null,
-        infoCompany: {
-          companyName: raw.companyName,
-          logo: raw.logo,
-          city: raw.city,
-          address: raw.address,
-          companyModel: raw.companyModel,
-          companyEmployees: raw.companyEmployees,
-          workingTime: raw.workingTime,
-          workOvertime: raw.workOvertime,
-          email: raw.email,
-          phone: raw.phone,
-          description: raw.description,
-        },
-      });
-    }
-
-    return res.json({
-      code: "error",
-      message: "Không hỗ trợ loại tài khoản này!",
-    });
+    return res.status(result.status).json(result.data);
   } catch (error) {
     console.log(error);
     return res.status(500).json({

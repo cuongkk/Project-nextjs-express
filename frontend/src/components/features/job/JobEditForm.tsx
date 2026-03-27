@@ -10,9 +10,9 @@ import FilePondPluginFileValidateType from "filepond-plugin-file-validate-type";
 import FilePondPluginImagePreview from "filepond-plugin-image-preview";
 import "filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css";
 import { Toaster, toast } from "sonner";
-import { positionList, workingFormList } from "@/configs/variable";
+import { positionList, workingFormList, TechList } from "@/configs/variable";
 import { useForm } from "react-hook-form";
-
+import { TechCheckboxGroup } from "@/components/ui/CheckBoxList";
 // Register the plugin
 registerPlugin(FilePondPluginFileValidateType, FilePondPluginImagePreview);
 
@@ -61,7 +61,7 @@ export const JobEditForm = (props: { id: string }) => {
         salaryMax: jobDetail.salaryMax,
         position: jobDetail.position,
         workingForm: jobDetail.workingForm,
-        technologies: jobDetail.technologies?.join(", ") || "",
+        technologies: jobDetail.technologies,
       });
     }
   }, [jobDetail, reset]);
@@ -74,11 +74,13 @@ export const JobEditForm = (props: { id: string }) => {
 
     const formData = new FormData();
     formData.append("title", data.title);
-    if (data.salaryMin) formData.append("salaryMin", data.salaryMin);
-    if (data.salaryMax) formData.append("salaryMax", data.salaryMax);
+    formData.append("salaryMin", data.salaryMin);
+    formData.append("salaryMax", data.salaryMax);
     formData.append("position", data.position);
     formData.append("workingForm", data.workingForm);
-    if (data.technologies) formData.append("technologies", data.technologies);
+    data.technologies.forEach((tech: string) => {
+      formData.append("technologies[]", tech);
+    });
     formData.append("description", description);
 
     if (images.length > 0) {
@@ -104,7 +106,6 @@ export const JobEditForm = (props: { id: string }) => {
         }
       });
   };
-
   return (
     <>
       <Toaster richColors position="top-right" />
@@ -117,7 +118,7 @@ export const JobEditForm = (props: { id: string }) => {
             <input
               type="text"
               id="title"
-              className="w-[100%] h-[46px] border border-[#DEDEDE] rounded-[4px] py-[14px] px-[20px] font-[500] text-[14px] text-black"
+              className="w-[100%] h-[46px] border border-[#DEDEDE] rounded-[4px] px-[20px] font-[500] text-[14px] text-black"
               {...register("title", {
                 required: "Vui lòng nhập tên công việc!",
               })}
@@ -126,15 +127,15 @@ export const JobEditForm = (props: { id: string }) => {
           </div>
           <div className="">
             <label htmlFor="salaryMin" className="block font-[500] text-[14px] text-black mb-[5px]">
-              Mức lương tối thiểu ($)
+              Mức lương tối thiểu
             </label>
-            <input type="number" id="salaryMin" className="w-[100%] h-[46px] border border-[#DEDEDE] rounded-[4px] py-[14px] px-[20px] font-[500] text-[14px] text-black" {...register("salaryMin")} />
+            <input type="number" id="salaryMin" className="w-[100%] h-[46px] border border-[#DEDEDE] rounded-[4px] px-[20px] font-[500] text-[14px] text-black" {...register("salaryMin")} />
           </div>
           <div className="">
             <label htmlFor="salaryMax" className="block font-[500] text-[14px] text-black mb-[5px]">
-              Mức lương tối đa ($)
+              Mức lương tối đa
             </label>
-            <input type="number" id="salaryMax" className="w-[100%] h-[46px] border border-[#DEDEDE] rounded-[4px] py-[14px] px-[20px] font-[500] text-[14px] text-black" {...register("salaryMax")} />
+            <input type="number" id="salaryMax" className="w-[100%] h-[46px] border border-[#DEDEDE] rounded-[4px] px-[20px] font-[500] text-[14px] text-black" {...register("salaryMax")} />
           </div>
           <div className="">
             <label htmlFor="position" className="block font-[500] text-[14px] text-black mb-[5px]">
@@ -142,7 +143,7 @@ export const JobEditForm = (props: { id: string }) => {
             </label>
             <select
               id="position"
-              className="w-[100%] h-[46px] border border-[#DEDEDE] rounded-[4px] py-[14px] px-[20px] font-[500] text-[14px] text-black"
+              className="w-[100%] h-[46px] border border-[#DEDEDE] rounded-[4px] px-[10px] font-[500] text-[14px] text-black"
               {...register("position", { required: "Vui lòng chọn cấp bậc!" })}
             >
               {positionList.map((item: any, index: number) => (
@@ -154,12 +155,12 @@ export const JobEditForm = (props: { id: string }) => {
             {errors.position && <p className="text-red-500 text-[13px] mt-[4px]">{errors.position.message as string}</p>}
           </div>
           <div className="">
-            <label htmlFor="workingForm" className="block font-[500] text-[14px] text-black mb-[5px]">
+            <label htmlFor="workingForm" className=" block font-[500] text-[14px] text-black mb-[5px]">
               Hình thức làm việc *
             </label>
             <select
               id="workingForm"
-              className="w-[100%] h-[46px] border border-[#DEDEDE] rounded-[4px] py-[14px] px-[20px] font-[500] text-[14px] text-black"
+              className="w-[100%] h-[46px] border border-[#DEDEDE] rounded-[4px] px-[10px] font-[500] text-[14px] text-black"
               {...register("workingForm", { required: "Vui lòng chọn hình thức làm việc!" })}
             >
               {workingFormList.map((item: any, index: number) => (
@@ -174,12 +175,7 @@ export const JobEditForm = (props: { id: string }) => {
             <label htmlFor="technologies" className="block font-[500] text-[14px] text-black mb-[5px]">
               Các công nghệ
             </label>
-            <input
-              type="text"
-              id="technologies"
-              className="w-[100%] h-[46px] border border-[#DEDEDE] rounded-[4px] py-[14px] px-[20px] font-[500] text-[14px] text-black"
-              {...register("technologies")}
-            />
+            <TechCheckboxGroup register={register} id="technologies" List={TechList} value={jobDetail.technologies || []} />
           </div>
           <div className="sm:col-span-2">
             <label htmlFor="images" className="block font-[500] text-[14px] text-black mb-[5px]">

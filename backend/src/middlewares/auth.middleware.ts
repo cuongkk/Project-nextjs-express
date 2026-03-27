@@ -3,6 +3,7 @@ import AccountUser from "../modules/user/user.model";
 import AccountCompany from "../modules/company/company.model";
 import { AccountRequest } from "../interfaces/request.interface";
 import { verifyAccessToken, JwtPayload } from "../utils/token.util";
+import * as authService from "../modules/auth/auth.service";
 
 declare module "express-serve-static-core" {
   interface Request {
@@ -23,21 +24,45 @@ const getTokenFromRequest = (req: AccountRequest): string | null => {
 
 export const authenticate = async (req: AccountRequest, res: Response, next: NextFunction) => {
   try {
-    const token = getTokenFromRequest(req);
+    let token = getTokenFromRequest(req);
 
+    // Nếu không có accessToken thì thử làm mới bằng refreshToken trong cookie
     if (!token) {
-      res.status(401).json({
-        code: "error",
-        message: "Vui lòng đăng nhập!",
+      const refreshResult: any = await authService.refreshToken(req as any);
+
+      if (!refreshResult || refreshResult.code !== "success" || !refreshResult.tokens) {
+        res.status(401).json({
+          code: "error",
+          message: "Vui lòng đăng nhập!",
+        });
+        return;
+      }
+
+      const { accessToken, refreshToken } = refreshResult.tokens as { accessToken: string; refreshToken: string };
+
+      // Set lại cookie giống auth.controller
+      res.cookie("accessToken", accessToken, {
+        maxAge: 15 * 60 * 1000,
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
       });
-      return;
+
+      const refreshCookieOptions: any = {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+      };
+
+      res.cookie("refreshToken", refreshToken, refreshCookieOptions);
+
+      token = accessToken;
     }
 
     const decoded = verifyAccessToken(token);
 
     req.user = decoded;
 
-    // Giữ tương thích cũ: gán req.account theo role
     if (decoded.role === "user") {
       const account = await AccountUser.findById(decoded.id);
       if (!account) {
@@ -77,10 +102,14 @@ export const verifyTokenUser = async (req: AccountRequest, res: Response, next: 
 export const verifyTokenCompany = async (req: AccountRequest, res: Response, next: NextFunction) => {
   await authenticate(req, res, (err?: any) => {
     if (err) return;
+
     if (req.user?.role !== "company") {
-      res.status(403).json({ code: "error", message: "Không có quyền truy cập!" });
-      return;
+      return res.status(403).json({
+        code: "error",
+        message: "Không có quyền truy cập!",
+      });
     }
+
     next();
   });
 };

@@ -27,7 +27,6 @@ export const showReloadToastIfAny = () => {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return;
 
-  // clear first to avoid duplicate on errors
   localStorage.removeItem(STORAGE_KEY);
 
   try {

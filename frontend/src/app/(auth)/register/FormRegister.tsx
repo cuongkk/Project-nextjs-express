@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Toaster, toast } from "sonner";
 import { useState } from "react";
+import { setReloadToast } from "@/utils/toast.helper";
 
 const roles = [
   { value: "user", label: "Ứng viên" },
@@ -12,7 +12,6 @@ const roles = [
 ];
 
 export const FormRegister = () => {
-  const router = useRouter();
   const [role, setRole] = useState<string>("user");
 
   const {
@@ -37,12 +36,11 @@ export const FormRegister = () => {
       .then((res) => res.json())
       .then((result) => {
         if (result.code === "error") {
-          toast.error(result.message);
+          setReloadToast(result.code, result.message);
         }
 
         if (result.code === "success") {
-          toast.success(result.message);
-          router.push("/auth/login");
+          setReloadToast(result.code, result.message);
         }
       });
   };

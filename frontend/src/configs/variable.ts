@@ -65,3 +65,5 @@ Bạn cam kết:
 - Không đính kèm nội dung vi phạm pháp luật, thuần phong mỹ tục.
 
 Hệ thống có thể sử dụng thông tin để gợi ý việc làm, gửi thông báo liên quan đến hoạt động tuyển dụng. Nếu bạn không đồng ý, vui lòng không tiếp tục nộp hồ sơ.`;
+
+export const TechList = ["JavaScript", "TypeScript", "Python", "Java", "C#", "PHP", "C++", "SQL", "NoSQL"];

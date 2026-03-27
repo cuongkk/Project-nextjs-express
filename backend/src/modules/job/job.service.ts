@@ -1,26 +1,32 @@
 import Job from "./job.model";
+import City from "../city/city.model";
 import AccountCompany from "../company/company.model";
 import { AccountRequest } from "../../interfaces/request.interface";
 import { PAGINATION } from "../../configs/variable.config";
 
-export const list = async () => {
+export const list = async (companyId: string) => {
   const limitItems = PAGINATION.JOB_LIST_PAGE_SIZE ?? 10;
 
-  const jobs = await Job.find().sort({ createdAt: "desc" }).limit(limitItems);
+  const jobs = await Job.find({ companyId }).sort({ createdAt: "desc" }).limit(limitItems);
 
+  const company = await AccountCompany.findById(companyId);
+
+  const city = await City.findById(company?.city);
   const dataFinal = jobs.map((item) => ({
-    id: item.id,
+    id: item._id,
+
     title: item.title,
     salaryMin: item.salaryMin,
     salaryMax: item.salaryMax,
     position: item.position,
     workingForm: item.workingForm,
     technologies: item.technologies,
+    companyCity: city?.name,
+    companyLogo: company?.logo,
   }));
 
   return {
     code: "success",
-    message: "Lấy danh sách công việc thành công!",
     jobs: dataFinal,
   };
 };
@@ -78,7 +84,7 @@ export const create = async (req: AccountRequest) => {
   req.body.companyId = req.account.id;
   req.body.salaryMin = req.body.salaryMin ? parseInt(req.body.salaryMin) : 0;
   req.body.salaryMax = req.body.salaryMax ? parseInt(req.body.salaryMax) : 0;
-  req.body.technologies = req.body.technologies ? req.body.technologies.split(", ") : [];
+  req.body.technologies = req.body.technologies || [];
   req.body.images = [];
 
   if (req.files) {
@@ -113,7 +119,7 @@ export const update = async (req: AccountRequest) => {
 
   req.body.salaryMin = req.body.salaryMin ? parseInt(req.body.salaryMin) : 0;
   req.body.salaryMax = req.body.salaryMax ? parseInt(req.body.salaryMax) : 0;
-  req.body.technologies = req.body.technologies ? req.body.technologies.split(", ") : [];
+  req.body.technologies = req.body.technologies || [];
   req.body.images = jobDetail.images;
 
   if (req.files && (req.files as any[]).length > 0) {

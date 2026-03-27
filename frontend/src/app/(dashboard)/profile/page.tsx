@@ -15,7 +15,7 @@ export default function Page() {
   useEffect(() => {
     if (!isAuthLoaded) return;
     if (!isLogin || !role) {
-      router.replace("/auth/login");
+      router.replace("/login");
     }
   }, [isAuthLoaded, isLogin, role, router]);
 

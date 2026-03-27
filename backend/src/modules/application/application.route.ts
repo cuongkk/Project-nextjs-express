@@ -1,21 +1,20 @@
 import { Router } from "express";
 import * as authMiddleware from "../../middlewares/auth.middleware";
-import * as applicationValidate from "../../validates/application.validate";
+import * as applicationValidate from "./application.validate";
 import * as applicationController from "./application.controller";
+import multer from "multer";
+import { storage } from "../../utils/cloudinary.helper";
 
 const router = Router();
 
-// APPLICATIONS
-// Apply to a job (user only)
-router.post("/", authMiddleware.verifyTokenUser, applicationValidate.applyPost, applicationController.apply);
+const upload = multer({ storage });
 
-// List applications depending on role (user/company)
+router.post("/", authMiddleware.verifyTokenUser, upload.single("fileCV"), applicationValidate.applyPost, applicationController.apply);
+
 router.get("/", authMiddleware.authenticate, applicationController.list);
 
-// Application detail for current user/company
 router.get("/:id", authMiddleware.authenticate, applicationController.detail);
 
-// Company change status for an application
 router.patch("/:id", authMiddleware.verifyTokenCompany, applicationValidate.companyChangeStatusPatch, applicationController.companyChangeStatus);
 
 export default router;

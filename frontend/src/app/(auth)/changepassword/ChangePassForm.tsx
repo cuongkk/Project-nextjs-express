@@ -66,7 +66,7 @@ export const ChangePassForm = () => {
 
       if (result.code === "success") {
         setReloadToast(result.code, result.message);
-        window.location.reload();
+        router.replace("/");
       }
     } catch (error) {
       setServerError("Có lỗi xảy ra, vui lòng thử lại!");

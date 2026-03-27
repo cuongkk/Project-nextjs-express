@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import useSWR from "swr";
+import { toast } from "sonner";
 import { usePathname } from "next/navigation";
-import { setReloadToast, showReloadToastIfAny } from "@/utils/toast.helper";
 
 export type UserInfo = {
   fullName: string;
@@ -34,105 +34,50 @@ export type CompanyInfo = {
   description?: string;
 };
 
-type AuthState = {
-  isLogin: boolean;
-  isAuthLoaded: boolean;
-  infoUser: UserInfo | null;
-  infoCompany: CompanyInfo | null;
+const fetcher = async (url: string) => {
+  const res = await fetch(url, {
+    credentials: "include",
+  });
+  return res.json();
 };
 
 export const useAuth = () => {
-  const [state, setState] = useState<AuthState>({
-    isLogin: false,
-    isAuthLoaded: false,
-    infoUser: null,
-    infoCompany: null,
-  });
-
   const pathname = usePathname();
 
-  useEffect(() => {
-    let cancelled = false;
+  const shouldFetch = !pathname.startsWith("/login") && !pathname.startsWith("/register") && !pathname.startsWith("/forgotpassword");
+  const { data, error, isLoading, mutate } = useSWR(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, fetcher, {
+    revalidateOnFocus: false, // tránh spam khi chuyển tab
+  });
 
-    if (pathname.startsWith("/login") || pathname.startsWith("/register") || pathname.startsWith("/forgotpassword")) {
-      setState((prev) => ({
-        ...prev,
-        isLogin: false,
-        isAuthLoaded: true,
-        infoUser: null,
-        infoCompany: null,
-      }));
-      return () => {
-        cancelled = true;
-      };
-    }
+  const isLogin = data?.code === "success";
 
-    setState((prev) => ({
-      ...prev,
-      isAuthLoaded: false,
-    }));
-
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
-      credentials: "include",
-    })
-      .then((res) => res.json())
-      .then((result) => {
-        if (cancelled) return;
-        if (result.code === "success") {
-          setState({
-            isLogin: true,
-            isAuthLoaded: true,
-            infoUser: result.infoUser ?? null,
-            infoCompany: result.infoCompany ?? null,
-          });
-          setReloadToast(result.code, result.message);
-          showReloadToastIfAny();
-        } else {
-          setState({
-            isLogin: false,
-            isAuthLoaded: true,
-            infoUser: null,
-            infoCompany: null,
-          });
-          if (result.message && result.message !== "Vui lòng đăng nhập!") {
-            setReloadToast(result.code, result.message);
-            showReloadToastIfAny();
-          }
-        }
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setState({
-          isLogin: false,
-          isAuthLoaded: true,
-          infoUser: null,
-          infoCompany: null,
-        });
-        setReloadToast("error", "Có lỗi xảy ra khi tải thông tin người dùng.");
-        showReloadToastIfAny();
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [pathname]);
   const logout = async () => {
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
         method: "POST",
         credentials: "include",
       });
-    } catch {}
+      const result = await res.json();
 
-    setState({
-      isLogin: false,
-      isAuthLoaded: true,
-      infoUser: null,
-      infoCompany: null,
-    });
+      if (result.code === "success") {
+        toast.success(result.message);
+      } else {
+        toast.error(result.message);
+      }
+
+      mutate(); // refresh lại /me
+    } catch {
+      toast.error("Logout thất bại!");
+    }
   };
 
   return {
-    ...state,
+    isLogin,
+    isAuthLoaded: !isLoading,
+    infoUser: data?.infoUser ?? null,
+    infoCompany: data?.infoCompany ?? null,
+    error,
     logout,
+    mutate, // nếu cần gọi lại thủ công
   };
 };

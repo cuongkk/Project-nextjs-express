@@ -8,7 +8,7 @@ import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from ".
 import { comparePassword, hashPassword } from "../../utils/password.util";
 import { AccountRequest } from "../../interfaces/request.interface";
 import bcrypt from "bcryptjs";
-
+import City from "../city/city.model";
 export const register = async (req: Request) => {
   const { email, password, role } = req.body as {
     email: string;
@@ -344,5 +344,87 @@ export const changePasswordPatch = async (req: AccountRequest) => {
   return {
     code: "success",
     message: "Đổi mật khẩu thành công!",
+  };
+};
+
+export const me = async (userPayload: any, account: any) => {
+  if (!userPayload || !account) {
+    return {
+      status: 401,
+      data: {
+        code: "error",
+        message: "Vui lòng đăng nhập!",
+      },
+    };
+  }
+
+  const raw = typeof account.toObject === "function" ? account.toObject() : account;
+
+  if (raw.password) {
+    delete raw.password;
+  }
+
+  if (userPayload.role === "user") {
+    return {
+      status: 200,
+      data: {
+        code: "success",
+        infoUser: {
+          fullName: raw.fullName,
+          email: raw.email,
+          phone: raw.phone,
+          birthday: raw.birthday,
+          gender: raw.gender,
+          address: raw.address,
+          experienceYears: raw.experienceYears,
+          currentPosition: raw.currentPosition,
+          desiredPosition: raw.desiredPosition,
+          skills: raw.skills,
+          education: raw.education,
+          socials: raw.socials,
+          avatar: raw.avatar,
+        },
+        infoCompany: null,
+      },
+    };
+  }
+
+  if (userPayload.role === "company") {
+    let city: any = null;
+
+    if (raw.city) {
+      const cityDoc = await City.findById(raw.city).lean();
+      if (cityDoc) {
+        city = cityDoc.name;
+      }
+    }
+    return {
+      status: 200,
+      data: {
+        code: "success",
+        infoUser: null,
+        infoCompany: {
+          companyName: raw.companyName,
+          logo: raw.logo,
+          city: city,
+          address: raw.address,
+          companyModel: raw.companyModel,
+          companyEmployees: raw.companyEmployees,
+          workingTime: raw.workingTime,
+          workOvertime: raw.workOvertime,
+          email: raw.email,
+          phone: raw.phone,
+          description: raw.description,
+        },
+      },
+    };
+  }
+
+  return {
+    status: 400,
+    data: {
+      code: "error",
+      message: "Không hỗ trợ loại tài khoản này!",
+    },
   };
 };

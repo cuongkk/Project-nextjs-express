@@ -2,7 +2,7 @@
 /* eslint-disable react-hooks/refs */
 "use client";
 import { EditorMCE } from "@/components/ui/EditorMCE";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { FilePond, registerPlugin } from "react-filepond";
 import "filepond/dist/filepond.min.css";
 import FilePondPluginFileValidateType from "filepond-plugin-file-validate-type";
@@ -11,7 +11,8 @@ import "filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css";
 import { Toaster, toast } from "sonner";
 import { positionList, workingFormList } from "@/configs/variable";
 import { useForm } from "react-hook-form";
-
+import { TechCheckboxGroup } from "@/components/ui/CheckBoxList";
+import { TechList } from "@/configs/variable";
 // Register the plugin
 registerPlugin(FilePondPluginFileValidateType, FilePondPluginImagePreview);
 
@@ -33,11 +34,13 @@ export const JobCreateForm = () => {
 
     const formData = new FormData();
     formData.append("title", data.title);
-    if (data.salaryMin) formData.append("salaryMin", data.salaryMin);
-    if (data.salaryMax) formData.append("salaryMax", data.salaryMax);
+    formData.append("salaryMin", data.salaryMin);
+    formData.append("salaryMax", data.salaryMax);
     formData.append("position", data.position);
     formData.append("workingForm", data.workingForm);
-    if (data.technologies) formData.append("technologies", data.technologies);
+    data.technologies.forEach((tech: string) => {
+      formData.append("technologies[]", tech);
+    });
     formData.append("description", description);
 
     if (images.length > 0) {
@@ -89,13 +92,13 @@ export const JobCreateForm = () => {
         </div>
         <div className="">
           <label htmlFor="salaryMin" className="block font-[500] text-[14px] text-black mb-[5px]">
-            Mức lương tối thiểu ($)
+            Mức lương tối thiểu
           </label>
           <input id="salaryMin" type="number" className="w-[100%] h-[46px] border border-[#DEDEDE] rounded-[4px] py-[14px] px-[20px] font-[500] text-[14px] text-black" {...register("salaryMin")} />
         </div>
         <div className="">
           <label htmlFor="salaryMax" className="block font-[500] text-[14px] text-black mb-[5px]">
-            Mức lương tối đa ($)
+            Mức lương tối đa
           </label>
           <input id="salaryMax" type="number" className="w-[100%] h-[46px] border border-[#DEDEDE] rounded-[4px] py-[14px] px-[20px] font-[500] text-[14px] text-black" {...register("salaryMax")} />
         </div>
@@ -137,12 +140,7 @@ export const JobCreateForm = () => {
           <label htmlFor="technologies" className="block font-[500] text-[14px] text-black mb-[5px]">
             Các công nghệ
           </label>
-          <input
-            id="technologies"
-            type="text"
-            className="w-[100%] h-[46px] border border-[#DEDEDE] rounded-[4px] py-[14px] px-[20px] font-[500] text-[14px] text-black"
-            {...register("technologies")}
-          />
+          <TechCheckboxGroup register={register} id="technologies" List={TechList} value={[]} />
         </div>
         <div className="sm:col-span-2">
           <label htmlFor="images" className="block font-[500] text-[14px] text-black mb-[5px]">
@@ -154,7 +152,7 @@ export const JobCreateForm = () => {
           <label htmlFor="description" className="block font-[500] text-[14px] text-black mb-[5px]">
             Mô tả chi tiết
           </label>
-          <EditorMCE editorRef={editorRef} value={"description"} id="" />
+          <EditorMCE editorRef={editorRef} value={""} id="description" />
         </div>
         <div className="sm:col-span-2">
           <button className="bg-[#0088FF] rounded-[4px] h-[48px] px-[20px] font-[700] text-[16px] text-white">Tạo mới</button>

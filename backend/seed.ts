@@ -60,7 +60,7 @@ const run = async () => {
       salaryMax: 25,
       position: "middle",
       workingForm: "full-time",
-      technologies: ["javaScript", "typeScript", "react", "next.js"],
+      technologies: ["JavaScript", "TypeScript", "SQL"],
       city: hanoiCity._id.toString(),
       description: "Phát triển giao diện web sử dụng React/Next.js.",
       images: [],
@@ -79,9 +79,7 @@ const run = async () => {
       companyId: company._id.toString(),
       jobId: job._id.toString(),
       cvId: cv._id.toString(),
-      coverLetter: "Em rất quan tâm tới vị trí Frontend tại công ty.",
-      status: "pending",
-      notes: "",
+      status: "initial",
       viewedByCompany: false,
     });
 
@@ -95,7 +93,7 @@ const run = async () => {
       userId: user._id.toString(),
       type: "application-status",
       title: "Cập nhật hồ sơ ứng tuyển",
-      message: "Hồ sơ của bạn cho vị trí Frontend Developer đã được tạo với trạng thái 'pending'.",
+      message: "Hồ sơ của bạn cho vị trí Frontend Developer đã được tạo với trạng thái .",
       data: {
         applicationId: application._id.toString(),
         jobId: job._id.toString(),
