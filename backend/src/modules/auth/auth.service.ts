@@ -259,16 +259,34 @@ export const forgotPassword = async (req: Request) => {
   };
 };
 
+export const verifyEmail = async (req: Request) => {
+  const { email, otp } = req.body as { email: string; otp: string };
+
+  const existRecord = await ForgotPassword.findOne({
+    email,
+    otp,
+  });
+
+  if (!existRecord) {
+    return {
+      code: "error",
+      message: "Mã OTP không đúng hoặc đã hết hạn!",
+    };
+  }
+  return {
+    code: "success",
+    message: "Xác thực email thành công!",
+  };
+};
+
 export const resetPassword = async (req: Request) => {
-  const { email, otp, newPassword } = req.body as {
+  const { email, newPassword } = req.body as {
     email: string;
-    otp: string;
     newPassword: string;
   };
 
   const existRecord = await ForgotPassword.findOne({
     email,
-    otp,
   });
 
   if (!existRecord) {

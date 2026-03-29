@@ -67,6 +67,7 @@ const run = async () => {
     });
 
     const cv = await CV.create({
+      userId: user._id.toString(),
       jobId: job._id.toString(),
       email: user.email,
       userName: user.fullName,
@@ -79,7 +80,7 @@ const run = async () => {
       companyId: company._id.toString(),
       jobId: job._id.toString(),
       cvId: cv._id.toString(),
-      status: "initial",
+      status: "pending",
       viewedByCompany: false,
     });
 
@@ -90,10 +91,10 @@ const run = async () => {
     });
 
     await Notification.create({
-      userId: user._id.toString(),
-      type: "application-status",
+      receiverId: user._id.toString(),
+      receiverType: "user",
       title: "Cập nhật hồ sơ ứng tuyển",
-      message: "Hồ sơ của bạn cho vị trí Frontend Developer đã được tạo với trạng thái .",
+      message: "Hồ sơ của bạn cho vị trí Frontend Developer đã được tạo với trạng thái pending.",
       data: {
         applicationId: application._id.toString(),
         jobId: job._id.toString(),

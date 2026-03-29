@@ -17,6 +17,8 @@ router.post("/logout", authController.logout);
 
 router.post("/forgot-password", authValidate.forgotPasswordPost, authController.forgotPassword);
 
+router.post("/verify-email", authValidate.verifyEmailPost, authController.verifyEmail);
+
 router.post("/reset-password", authValidate.resetPasswordPost, authController.resetPassword);
 
 router.patch("/change-password", authMiddleware.verifyTokenUser, authValidate.changePasswordPatch, authController.changePassword);

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { CheckBox } from "@/components/ui/CheckBox";
 import { useState } from "react";
-import { setReloadToast } from "@/utils/toast.helper";
+import { setReloadToast, showReloadToastIfAny } from "@/utils/toast.helper";
 import { mutate } from "swr/_internal";
 
 export const LoginForm = () => {
@@ -38,6 +38,7 @@ export const LoginForm = () => {
       .then(async (result) => {
         if (result.code === "error") {
           setReloadToast(result.code, result.message);
+          showReloadToastIfAny();
         }
 
         if (result.code === "success") {
@@ -93,7 +94,7 @@ export const LoginForm = () => {
             <CheckBox checked={checked} onChange={setChecked} />
             <span className="font-[500] text-[14px] text-black">Ghi nhớ đăng nhập</span>
           </div>
-          <Link href="/forgot-password">
+          <Link href="/forgotpassword">
             <div className="font-[500] text-[14px] text-[#0088FF]">Quên mật khẩu?</div>
           </Link>
         </div>

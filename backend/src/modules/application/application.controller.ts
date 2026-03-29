@@ -15,12 +15,14 @@ export const list = async (req: AccountRequest, res: Response) => {
   const role = (req as any).user?.role;
 
   if (role === "user") {
+    // FIXED: user only sees their own applications (service filters by userId)
     const result = await applicationService.userList(req);
     res.json(result);
     return;
   }
 
   if (role === "company") {
+    // FIXED: company only sees applications for its own jobs (service filters by companyId)
     const result = await applicationService.companyList(req);
     res.json(result);
     return;
@@ -34,12 +36,14 @@ export const detail = async (req: AccountRequest, res: Response) => {
 
   try {
     if (role === "user") {
+      // FIXED: user can only view their own application (service enforces userId)
       const result = await applicationService.userDetail(req);
       res.json(result);
       return;
     }
 
     if (role === "company") {
+      // FIXED: company can only view applications that belong to its jobs (service enforces companyId)
       const result = await applicationService.companyDetail(req);
       res.json(result);
       return;

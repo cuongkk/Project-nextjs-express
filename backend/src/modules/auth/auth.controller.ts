@@ -116,6 +116,19 @@ export const forgotPassword = async (req: Request, res: Response) => {
   }
 };
 
+export const verifyEmail = async (req: Request, res: Response) => {
+  try {
+    const result = await authService.verifyEmail(req);
+    res.json(result as any);
+  } catch (error) {
+    console.log(error);
+    res.json({
+      code: "error",
+      message: "Xác thực email không thành công!",
+    });
+  }
+};
+
 export const resetPassword = async (req: Request, res: Response) => {
   try {
     const result = await authService.resetPassword(req);

@@ -1,23 +1,37 @@
+import mongoose from "mongoose"; // ADDED
 import { AccountRequest } from "../../interfaces/request.interface";
 import Application from "./application.model";
 import Job from "../job/job.model";
 import AccountCompany from "../company/company.model";
 import CV from "../cv/cv.model";
 import { PAGINATION } from "../../configs/variable.config";
+import Notification from "../notificaion/notification.model"; // FIXED: use Notification model instead of service
+import { sendMail } from "../../utils/mail.helper"; // ADDED
 
 export const apply = async (req: AccountRequest & { file?: any }) => {
   const userId = req.account.id;
   const { jobId, cvId, email, userName, phone } = req.body as {
     jobId: string;
     cvId?: string;
-    email?: string;
+    email?: string; // ADDED: still stored but NOT used for ownership
     userName?: string;
     phone?: string;
   };
 
+  // FIXED: Validate job existence and lifecycle
   const job = await Job.findById(jobId);
   if (!job) {
     return { code: "error", message: "Công việc không tồn tại!" };
+  }
+
+  if (job.status && job.status !== "active") {
+    // FIXED: Prevent applying to non-active job
+    return { code: "error", message: "Công việc đã đóng hoặc hết hạn!" };
+  }
+
+  if (job.expiresAt && job.expiresAt < new Date()) {
+    // FIXED: Prevent applying to expired job
+    return { code: "error", message: "Công việc đã hết hạn!" };
   }
 
   const companyId = job.companyId ? `${job.companyId}` : "";
@@ -25,42 +39,117 @@ export const apply = async (req: AccountRequest & { file?: any }) => {
     return { code: "error", message: "Công việc không hợp lệ!" };
   }
 
-  let finalCvId = cvId;
-
-  if (!finalCvId) {
-    if (!email || !userName || !phone) {
-      return { code: "error", message: "Thiếu thông tin CV để ứng tuyển!" };
-    }
-
-    const filePath = (req as any).file ? (req as any).file.path : (req.body as any).fileCV || "";
-
-    const cv = await CV.create({
-      jobId,
-      email,
-      userName,
-      phone,
-      fileCV: filePath,
-    });
-
-    finalCvId = cv._id.toString();
-  } else {
-    const cv = await CV.findOne({ _id: finalCvId, email });
-    if (!cv) {
-      return { code: "error", message: "CV không hợp lệ hoặc không thuộc về tài khoản hiện tại!" };
-    }
+  // FIXED: Prevent duplicate application per user/job
+  const existingApplication = await Application.findOne({ userId, jobId });
+  if (existingApplication) {
+    return {
+      code: "error",
+      message: "Bạn đã ứng tuyển công việc này rồi!",
+    };
   }
 
-  await Application.create({
-    userId,
-    companyId,
-    jobId,
-    cvId: finalCvId,
-  });
+  const session = await mongoose.startSession(); // ADDED: transaction session
 
-  return {
-    code: "success",
-    message: "Đã gửi đơn ứng tuyển thành công!",
-  };
+  try {
+    let application: any = null;
+
+    await session.withTransaction(async () => {
+      let finalCvId = cvId;
+
+      if (!finalCvId) {
+        if (!userName || !phone) {
+          // FIXED: Use user info, email optional
+          throw new Error("MISSING_CV_INFO");
+        }
+
+        const filePath = (req as any).file ? (req as any).file.path : (req.body as any).fileCV || "";
+
+        const [cv] = await CV.create(
+          [
+            {
+              userId, // FIXED: CV ownership by userId
+              jobId,
+              email,
+              userName,
+              phone,
+              fileCV: filePath,
+            },
+          ],
+          { session },
+        );
+
+        finalCvId = cv._id.toString();
+      } else {
+        // FIXED: Validate CV ownership using userId instead of email
+        const cv = await CV.findOne({ _id: finalCvId, userId }).session(session);
+        if (!cv) {
+          throw new Error("CV_OWNERSHIP_INVALID");
+        }
+      }
+
+      const now = new Date();
+
+      const [createdApp] = await Application.create(
+        [
+          {
+            userId,
+            companyId,
+            jobId,
+            cvId: finalCvId,
+            status: "pending", // FIXED: initial status now "pending"
+            history: [
+              {
+                status: "pending", // ADDED: history entry
+                updatedAt: now,
+              },
+            ],
+          },
+        ],
+        { session },
+      );
+
+      application = createdApp;
+
+      // FIXED: Notification uses receiverId/receiverType
+      await Notification.create(
+        [
+          {
+            receiverId: companyId,
+            receiverType: "company",
+            type: "NEW_APPLICATION",
+            title: "Đơn ứng tuyển mới",
+            message: `Bạn có đơn ứng tuyển mới cho công việc "${job.title}"`,
+            data: {
+              applicationId: createdApp._id.toString(),
+              jobId,
+              cvId: finalCvId,
+            },
+          },
+        ],
+        { session },
+      );
+    });
+
+    return {
+      code: "success",
+      message: "Đã gửi đơn ứng tuyển thành công!",
+    };
+  } catch (error: any) {
+    // FIXED: Map known error cases
+    if (error?.message === "MISSING_CV_INFO") {
+      return { code: "error", message: "Thiếu thông tin CV để ứng tuyển!" };
+    }
+    if (error?.message === "CV_OWNERSHIP_INVALID") {
+      return { code: "error", message: "CV không hợp lệ hoặc không thuộc về tài khoản hiện tại!" };
+    }
+    if (error?.code === 11000) {
+      // ADDED: unique index violation safety net
+      return { code: "error", message: "Bạn đã ứng tuyển công việc này rồi!" };
+    }
+    return { code: "error", message: "Gửi đơn ứng tuyển thất bại!" };
+  } finally {
+    session.endSession();
+  }
 };
 
 export const userList = async (req: AccountRequest) => {
@@ -68,7 +157,9 @@ export const userList = async (req: AccountRequest) => {
   const find: any = { userId };
 
   const statusParam = (req.query.status as string) || "";
-  if (["initial", "approved", "rejected"].includes(statusParam)) {
+  const allowedStatuses = ["pending", "reviewing", "shortlisted", "rejected", "accepted"]; // ADDED
+  if (allowedStatuses.includes(statusParam)) {
+    // FIXED: use new status values
     find.status = statusParam;
   }
 
@@ -87,13 +178,20 @@ export const userList = async (req: AccountRequest) => {
 
   const applications = await Application.find(find).sort({ createdAt: sortDirection }).limit(limitItems).skip(skip);
 
-  const dataFinal: any[] = [];
+  // FIXED: N+1 query -> batch load jobs and companies
+  const jobIds = Array.from(new Set(applications.map((app) => `${app.jobId}`)));
+  const jobs = await Job.find({ _id: { $in: jobIds } });
+  const jobMap = new Map(jobs.map((job) => [job._id.toString(), job]));
 
-  for (const app of applications) {
-    const job = await Job.findById(app.jobId);
-    const company = job ? await AccountCompany.findById(job.companyId) : null;
+  const companyIds = Array.from(new Set(jobs.map((job) => `${job.companyId}`))).filter(Boolean);
+  const companies = await AccountCompany.find({ _id: { $in: companyIds } });
+  const companyMap = new Map(companies.map((company) => [company._id.toString(), company]));
 
-    dataFinal.push({
+  const dataFinal: any[] = applications.map((app) => {
+    const job = jobMap.get(`${app.jobId}`) as any;
+    const company = job ? (companyMap.get(`${job.companyId}`) as any) : null;
+
+    return {
       id: app.id,
       status: app.status,
       viewedByCompany: app.viewedByCompany,
@@ -101,8 +199,8 @@ export const userList = async (req: AccountRequest) => {
       jobTitle: job?.title ?? "",
       companyName: company?.companyName ?? "",
       createdAt: app.createdAt,
-    });
-  }
+    };
+  });
 
   return {
     code: "success",
@@ -140,7 +238,9 @@ export const companyList = async (req: AccountRequest) => {
   const find: any = { companyId };
 
   const statusParam = (req.query.status as string) || "";
-  if (["initial", "approved", "rejected"].includes(statusParam)) {
+  const allowedStatuses = ["pending", "reviewing", "shortlisted", "rejected", "accepted"]; // ADDED
+  if (allowedStatuses.includes(statusParam)) {
+    // FIXED: use new status values
     find.status = statusParam;
   }
 
@@ -164,13 +264,21 @@ export const companyList = async (req: AccountRequest) => {
 
   const applications = await Application.find(find).sort({ createdAt: sortDirection }).limit(limitItems).skip(skip);
 
-  const dataFinal: any[] = [];
+  // FIXED: N+1 query -> batch load jobs and CVs
+  const jobIds = Array.from(new Set(applications.map((app) => `${app.jobId}`)));
+  const cvIds = Array.from(new Set(applications.map((app) => `${app.cvId}`)));
 
-  for (const app of applications) {
-    const job = await Job.findById(app.jobId);
-    const cv = await CV.findById(app.cvId);
+  const jobs = await Job.find({ _id: { $in: jobIds } });
+  const jobMap = new Map(jobs.map((job) => [job._id.toString(), job]));
 
-    dataFinal.push({
+  const cvs = await CV.find({ _id: { $in: cvIds } });
+  const cvMap = new Map(cvs.map((cv) => [cv._id.toString(), cv]));
+
+  const dataFinal: any[] = applications.map((app) => {
+    const job = jobMap.get(`${app.jobId}`) as any;
+    const cv = cvMap.get(`${app.cvId}`) as any;
+
+    return {
       id: app.id,
       status: app.status,
       viewedByCompany: app.viewedByCompany,
@@ -180,8 +288,8 @@ export const companyList = async (req: AccountRequest) => {
       candidateName: cv?.userName ?? "",
       candidatePhone: cv?.phone ?? "",
       createdAt: app.createdAt,
-    });
-  }
+    };
+  });
 
   return {
     code: "success",
@@ -226,9 +334,69 @@ export const companyChangeStatus = async (req: AccountRequest) => {
   if (!app) {
     return { code: "error", message: "Không tìm thấy đơn ứng tuyển!" };
   }
+  // FIXED: ensure new status values only
+  const allowedStatuses = ["pending", "reviewing", "shortlisted", "rejected", "accepted"];
+  if (!allowedStatuses.includes(status)) {
+    return { code: "error", message: "Trạng thái không hợp lệ!" };
+  }
+
+  if (app.status === "accepted" && status === "accepted") {
+    // FIXED: prevent double-accept
+    return { code: "error", message: "Đơn ứng tuyển này đã được chấp nhận trước đó!" };
+  }
+
+  // ADDED: ensure job belongs to company and CV belongs to user
+  const job = await Job.findOne({ _id: app.jobId, companyId });
+  if (!job) {
+    return { code: "error", message: "Công việc không hợp lệ cho tài khoản này!" };
+  }
+
+  const cv = await CV.findById(app.cvId);
+  if (!cv || `${cv.userId}` !== `${app.userId}`) {
+    return { code: "error", message: "CV không hợp lệ cho đơn ứng tuyển này!" };
+  }
+
+  if (status === "accepted") {
+    const existingAccepted = await Application.findOne({ jobId: app.jobId, status: "accepted" });
+    if (existingAccepted && existingAccepted._id.toString() !== app._id.toString()) {
+      // FIXED: only one accepted application per job
+      return { code: "error", message: "Công việc này đã có ứng viên được chấp nhận!" };
+    }
+  }
 
   app.status = status;
+  app.history = app.history || []; // ADDED: ensure history exists
+  app.history.push({ status, updatedAt: new Date() }); // ADDED
   await app.save();
 
-  return { code: "success", message: "Cập nhật trạng thái thành công!" };
+  if (status === "accepted") {
+    try {
+      // ADDED: close job when CV accepted
+      job.status = "closed";
+      await job.save();
+
+      // FIXED: notification for user using receiverId/receiverType
+      await Notification.create({
+        receiverId: app.userId || "",
+        receiverType: "user",
+        type: "CV_ACCEPTED",
+        title: "CV đã được chấp nhận",
+        message: `CV của bạn cho công việc ${job.title} đã được chấp nhận.`,
+        data: {
+          applicationId: app._id.toString(),
+          jobId: app.jobId,
+          cvId: app.cvId,
+        },
+      });
+
+      if (cv.email) {
+        const emailContent = `<p>Your CV has been accepted.</p>`; // FIXED: simple email template kept
+        await sendMail(cv.email, "Your CV has been accepted", emailContent);
+      }
+    } catch {
+      // ignore notification or email failure
+    }
+  }
+
+  return { code: "success", message: "Cập nhật trạng thái đơn ứng tuyển thành công!" };
 };

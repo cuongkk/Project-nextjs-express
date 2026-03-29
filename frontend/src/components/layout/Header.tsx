@@ -4,6 +4,7 @@ import { FaBars } from "react-icons/fa6";
 import { HeaderMenu } from "./HeaderMenu";
 import { useState } from "react";
 import { HeaderAccount } from "./HeaderAccount";
+import { HeaderNotification } from "./HeaderNotification"; // ADDED
 
 export const Header = () => {
   const [showMenu, setShowMenu] = useState(false);
@@ -21,6 +22,7 @@ export const Header = () => {
               ITJobs
             </Link>
             <HeaderMenu showMenu={showMenu} />
+            <HeaderNotification />
             <HeaderAccount />
             <button className="lg:hidden text-white text-[20px] ml-[12px]" onClick={handleShowMenu}>
               <FaBars />

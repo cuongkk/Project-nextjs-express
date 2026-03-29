@@ -8,6 +8,7 @@ import jobRoutes from "../modules/job/job.route";
 import cvRoutes from "../modules/cv/cv.route";
 import applicationRoutes from "../modules/application/application.route";
 import searchRoutes from "../modules/search/search.route";
+import notificationRoutes from "../modules/notificaion/notification.route"; // ADDED
 
 const router = Router();
 
@@ -28,5 +29,7 @@ router.use("/cvs", cvRoutes);
 router.use("/applications", applicationRoutes);
 
 router.use("/search", searchRoutes);
+
+router.use("/notifications", notificationRoutes); // ADDED
 
 export default router;

@@ -1,17 +1,19 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FaMagnifyingGlass } from "react-icons/fa6";
+import { TechList } from "@/configs/variable";
 
 export const SectionSearch = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const handleSearch = (event: any) => {
-    event.preventDefault();
-    const city = event.target.city.value;
-    const keyword = event.target.keyword.value;
+  const handleSearch = (data: any) => {
+    data.preventDefault();
+
+    const formData = new FormData(data.currentTarget);
+    const city = (formData.get("city") as string) || "";
+    const keyword = (formData.get("keyword") as string) || "";
     const params = new URLSearchParams(searchParams.toString());
 
     if (city) {
@@ -26,7 +28,7 @@ export const SectionSearch = () => {
       params.delete("keyword");
     }
 
-    router.push(`/search?${params.toString()}`);
+    router.push(`/?${params.toString()}`);
   };
 
   const handleSearchTech = (value: string) => {
@@ -38,7 +40,7 @@ export const SectionSearch = () => {
       params.delete("technologies");
     }
 
-    router.push(`/search?${params.toString()}`);
+    router.push(`/?${params.toString()}`);
   };
 
   return (
@@ -62,24 +64,11 @@ export const SectionSearch = () => {
           <div className="flex gap-x-[12px] gap-y-[15px] items-center flex-wrap">
             <div className="font-[500] text-[16px] text-[#DEDEDE]">Mọi người đang tìm kiếm:</div>
             <div className="flex flex-wrap gap-[10px]">
-              <button
-                onClick={() => handleSearchTech("reactJS")}
-                className="rounded-[20px] bg-[#121212] hover:bg-[#414042] border-[1px] border-[#414042] py-[8px] px-[22px] font-[500] text-[16px] text-[#DEDEDE] hover:text-[#FFFFFF] inline-block"
-              >
-                ReactJS
-              </button>
-              <button
-                onClick={() => handleSearchTech("javascript")}
-                className="rounded-[20px] bg-[#121212] hover:bg-[#414042] border-[1px] border-[#414042] py-[8px] px-[22px] font-[500] text-[16px] text-[#DEDEDE] hover:text-[#FFFFFF] inline-block"
-              >
-                Javascript
-              </button>
-              <button
-                onClick={() => handleSearchTech("nodeJS")}
-                className="rounded-[20px] bg-[#121212] hover:bg-[#414042] border-[1px] border-[#414042] py-[8px] px-[22px] font-[500] text-[16px] text-[#DEDEDE] hover:text-[#FFFFFF] inline-block"
-              >
-                NodeJS
-              </button>
+              {TechList.map((tech: string, index: number) => (
+                <button key={index} onClick={() => handleSearchTech(tech)} className="cursor-pointer inline-block bg-[#F0F0F0] text-[#414042] text-[14px] font-[400] py-[4px] px-[8px] rounded-[8px]">
+                  {tech}
+                </button>
+              ))}
             </div>
           </div>
         </div>

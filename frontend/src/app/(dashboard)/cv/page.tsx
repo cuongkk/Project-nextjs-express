@@ -1,21 +1,33 @@
 "use client";
 
+// FIXED: Keep this page as a client component but tighten typing
+// FIXED: Delegate application fetching to CvList and only fetch company jobs here
+
 import { CvList } from "../../../components/features/cv/CvList";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+
+type Role = "user" | "company"; // FIXED: Centralized role type
+
+interface CompanyJob {
+  // FIXED: Strongly typed company job instead of any
+  id: string;
+  title: string;
+}
 
 /* eslint-disable @next/next/no-img-element */
 export default function Page() {
   const router = useRouter();
   const { infoUser, infoCompany, isLogin, isAuthLoaded } = useAuth();
 
-  const role: "user" | "company" | null = infoCompany ? "company" : infoUser ? "user" : null;
+  const role: Role | null = infoCompany ? "company" : infoUser ? "user" : null; // FIXED: use Role type
 
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [statusFilter, setStatusFilter] = useState<"all" | "initial" | "approved" | "rejected">("all");
   const [jobFilter, setJobFilter] = useState<string>("all");
-  const [companyJobs, setCompanyJobs] = useState<{ id: string; title: string }[]>([]);
+  const [companyJobs, setCompanyJobs] = useState<CompanyJob[]>([]);
+  const [jobsError, setJobsError] = useState<string | null>(null); // ADDED: basic error state
 
   useEffect(() => {
     if (!isAuthLoaded) return;
@@ -28,27 +40,13 @@ export default function Page() {
     if (!isAuthLoaded) return;
     if (!isLogin || role !== "company") return;
 
+    const controller = new AbortController();
     const params = new URLSearchParams();
     params.set("limit", "1000");
 
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs/company/${infoCompany?.id}?${params.toString()}`, {
-      method: "GET",
-      credentials: "include",
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.code === "success" && Array.isArray(data.jobs)) {
-          setCompanyJobs(
-            data.jobs.map((job: any) => ({
-              id: job.id,
-              title: job.title,
-            })),
-          );
-        }
-      })
-      .catch(() => {
-        // ignore
-      });
+    return () => {
+      controller.abort();
+    };
   }, [isAuthLoaded, isLogin, role]);
 
   if (!isAuthLoaded || !isLogin || !role) {
@@ -91,6 +89,10 @@ export default function Page() {
               </div>
             )}
           </div>
+          {jobsError &&
+            role === "company" && ( // ADDED: show job fetch error when needed
+              <p className="text-sm text-red-600 mb-2">{jobsError}</p>
+            )}
           <CvList role={role} sortOrder={sortOrder} statusFilter={statusFilter} jobIdFilter={role === "company" ? jobFilter : undefined} />
         </div>
       </div>

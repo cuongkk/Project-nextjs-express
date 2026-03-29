@@ -122,7 +122,7 @@ export const forgotPasswordPost = async (req: Request, res: Response, next: Next
   next();
 };
 
-export const resetPasswordPost = async (req: Request, res: Response, next: NextFunction) => {
+export const verifyEmailPost = async (req: Request, res: Response, next: NextFunction) => {
   const schema = Joi.object({
     email: Joi.string().email().required().messages({
       "string.empty": "Vui lòng nhập email!",
@@ -132,10 +132,30 @@ export const resetPasswordPost = async (req: Request, res: Response, next: NextF
       "string.empty": "Vui lòng nhập mã OTP!",
       "string.length": "Mã OTP phải gồm 6 ký tự!",
     }),
+  }).unknown(true);
+  const { error } = schema.validate(req.body);
+  if (error) {
+    const errorMessage = error.details[0].message;
+
+    res.json({
+      code: "error",
+      message: errorMessage,
+    });
+    return;
+  }
+  next();
+};
+
+export const resetPasswordPost = async (req: Request, res: Response, next: NextFunction) => {
+  const schema = Joi.object({
+    email: Joi.string().email().required().messages({
+      "string.empty": "Vui lòng nhập email!",
+      "string.email": "Email không đúng định dạng!",
+    }),
     newPassword: passwordSchema.required().messages({
       "string.empty": "Vui lòng nhập mật khẩu mới!",
     }),
-  });
+  }).unknown(true);
 
   const { error } = schema.validate(req.body);
   if (error) {

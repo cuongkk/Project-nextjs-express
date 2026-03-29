@@ -12,6 +12,13 @@ const schema = new mongoose.Schema(
     description: String,
     images: Array,
     city: String,
+    // ADDED: Job lifecycle fields
+    status: {
+      type: String,
+      enum: ["active", "closed", "expired"],
+      default: "active",
+    },
+    expiresAt: Date,
   },
   {
     timestamps: true, // Tự động sinh ra trường createdAt và updatedAt

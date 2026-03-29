@@ -47,19 +47,6 @@ export const SectionJob = () => {
     router.push(`/search?${params.toString()}`);
   };
 
-  const handleFilterWorkingForm = (event: any) => {
-    const value = event.target.value;
-
-    const params = new URLSearchParams(searchParams.toString());
-    if (value) {
-      params.set("workingForm", value);
-    } else {
-      params.delete("workingForm");
-    }
-
-    router.push(`/search?${params.toString()}`);
-  };
-
   const handlePagination = (value: number) => {
     setPage(value);
   };
@@ -68,21 +55,14 @@ export const SectionJob = () => {
     <>
       <div className="py-[60px]">
         <div className="contain">
-          <div className="py-[10px] px-[20px] rounded-[8px] flex flex-wrap gap-[12px] mb-[30px]" style={{ boxShadow: "0px 4px 20px 0px #0000000F" }}>
-            <select className="h-[36px] border-[1px] border-[#DEDEDE] rounded-[20px] px-[18px] font-[400] text-[16px] text-[#414042]" onChange={handleFilterPosition} defaultValue={position}>
-              {positionList.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-            <select className="h-[36px] border-[1px] border-[#DEDEDE] rounded-[20px] px-[18px] font-[400] text-[16px] text-[#414042]" onChange={handleFilterWorkingForm} defaultValue={workingForm}>
-              {workingFormList.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
+          <div className="flex items-center justify-end mb-[20px]">
+            <button
+              type="button"
+              onClick={() => router.push(`/search${searchParams.toString() ? `?${searchParams.toString()}` : ""}`)}
+              className="border border-primary text-primary rounded-[4px] px-[16px] py-[8px] text-[14px] font-[500]"
+            >
+              Tìm kiếm nâng cao
+            </button>
           </div>
           <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-[20px]">
             {jobList.map((item) => (

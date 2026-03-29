@@ -2,19 +2,24 @@ import mongoose from "mongoose";
 
 const schema = new mongoose.Schema(
   {
-    userId: String, // người nhận: có thể là ứng viên hoặc công ty (account-company)
-    type: String, // application-status, new-job, system, ...
+    receiverId: String,
+    receiverType: {
+      type: String,
+      enum: ["user", "company"],
+    },
     title: String,
     message: String,
     data: Object,
+
     read: {
       type: Boolean,
       default: false,
     },
+
+    readAt: Date,
+    expiresAt: Date,
   },
-  {
-    timestamps: true,
-  },
+  { timestamps: true },
 );
 
 const Notification = mongoose.model("Notification", schema, "notifications");

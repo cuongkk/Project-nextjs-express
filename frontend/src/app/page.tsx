@@ -7,6 +7,7 @@ export default function Home() {
   return (
     <>
       <ToastProvider />
+
       {/* Section 1 */}
       <SectionSearch />
       {/* End Section 1 */}
