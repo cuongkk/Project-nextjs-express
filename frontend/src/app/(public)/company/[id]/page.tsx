@@ -1,32 +1,60 @@
-"use client";
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { JobItem } from "@/components/features/job/JobItem";
 import { FaLocationDot } from "react-icons/fa6";
-import { notFound, useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { notFound } from "next/navigation";
 
 /* eslint-disable @next/next/no-img-element */
-export default function Page() {
-  const params = useParams<{ id: string }>();
-  const id = params.id as string;
+type CompanyPageParams = {
+  id: string;
+};
 
-  const [companyDetail, setCompanyDetail] = useState<any | null>(null);
-  const [jobList, setJobList] = useState<any[]>([]);
-  useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/companies/${id}`, {
-      method: "GET",
-      credentials: "include",
-      cache: "no-store",
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.code === "error") {
-          notFound();
-        }
-        setCompanyDetail(data.companyDetail);
-        setJobList(Array.isArray(data.jobs) ? data.jobs : []);
-      });
-  }, [id]);
+type CompanyResponse = {
+  code?: string;
+  companyDetail?: {
+    companyName?: string;
+    logo?: string;
+    address?: string;
+    companyEmployees?: string;
+    workingTime?: string;
+    description?: string;
+  };
+  jobs?: Array<{ id: string | number; [key: string]: unknown }>;
+};
+
+async function getCompanyData(id: string) {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  if (!apiUrl) {
+    throw new Error("NEXT_PUBLIC_API_URL is not defined");
+  }
+
+  const response = await fetch(`${apiUrl}/companies/${id}`, {
+    method: "GET",
+    cache: "no-store",
+  });
+
+  if (response.status === 404) {
+    notFound();
+  }
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch company detail. Status: ${response.status}`);
+  }
+
+  const data = (await response.json()) as CompanyResponse;
+
+  if (data.code === "error" || !data.companyDetail) {
+    notFound();
+  }
+
+  return {
+    companyDetail: data.companyDetail,
+    jobList: Array.isArray(data.jobs) ? data.jobs : [],
+  };
+}
+
+export default async function Page({ params }: { params: Promise<CompanyPageParams> }) {
+  const { id } = await params;
+  const { companyDetail, jobList } = await getCompanyData(id);
 
   return (
     <>
@@ -59,7 +87,7 @@ export default function Page() {
           </div>
           <div className="border border-[#DEDEDE] rounded-[8px] p-[20px] mt-[20px]">
             {" "}
-            <div dangerouslySetInnerHTML={{ __html: companyDetail?.description }} />
+            <div dangerouslySetInnerHTML={{ __html: companyDetail?.description ?? "" }} />
           </div>
           <div className="mt-[30px]">
             <h2 className="font-[700] text-[28px] text-[#121212] mb-[20px]">Công ty có {jobList.length} việc làm</h2>
@@ -67,7 +95,7 @@ export default function Page() {
               <p className="text-[14px] text-[#6B6B6B]">Hiện tại công ty chưa có công việc nào đang tuyển dụng.</p>
             ) : (
               <div className="grid lg:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-[20px]">
-                {jobList.map((item: any) => (
+                {jobList.map((item) => (
                   <JobItem item={item} key={item.id} />
                 ))}
               </div>

@@ -4,7 +4,6 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
   images: {
-    domains: ["placehold.co", "picsum.photos", "images.unsplash.com", "images.pexels.com", "res.cloudinary.com"],
     remotePatterns: [
       {
         protocol: "https",
