@@ -74,7 +74,7 @@ export const JobCreateForm = () => {
 
   return (
     <>
-      <Toaster richColors position="top-right" />
+      <Toaster richColors position="top-right" toastOptions={{ duration: 1000 }} />
       <form className="grid sm:grid-cols-2 grid-cols-1 gap-x-[20px] gap-y-[15px]" id="createForm" onSubmit={handleSubmit(onSubmit) as any}>
         <div className="sm:col-span-2">
           <label htmlFor="title" className="block font-[500] text-[14px] text-black mb-[5px]">

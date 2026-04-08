@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Toaster } from "sonner";
-import { setReloadToast } from "@/utils/toast.helper";
+import { setReloadToast } from "@/utils/toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 
@@ -86,7 +86,7 @@ export const ChangePassForm = () => {
 
   return (
     <>
-      <Toaster richColors position="top-right" />
+      <Toaster richColors position="top-right" toastOptions={{ duration: 1000 }} />
 
       <form onSubmit={handleSubmit(onSubmit) as any} className="max-w-[500px] space-y-[15px]">
         {serverError && <p className="text-red-500 text-sm">{serverError}</p>}

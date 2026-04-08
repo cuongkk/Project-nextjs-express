@@ -3,10 +3,11 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FaMagnifyingGlass } from "react-icons/fa6";
 import { TechList } from "@/configs/variable";
-
+import { useEffect, useState } from "react";
 export const SectionSearch = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [totalJob, setTotalJob] = useState(0);
 
   const handleSearch = (data: any) => {
     data.preventDefault();
@@ -43,11 +44,22 @@ export const SectionSearch = () => {
     router.push(`/?${params.toString()}`);
   };
 
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs/all`, {
+      method: "GET",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.code === "success") {
+          setTotalJob(data.total);
+        }
+      });
+  }, []);
   return (
     <>
       <div className="bg-[#000065] py-[60px]">
         <div className="contain">
-          <h1 className="font-[700] text-[28px] text-white mb-[30px] text-center">887 Việc làm IT cho Developer &quot;Chất&quot;</h1>
+          <h1 className="font-[700] text-[28px] text-white mb-[30px] text-center">{totalJob} Việc làm IT </h1>
           <form onSubmit={handleSearch} className="flex gap-x-[15px] gap-y-[12px] mb-[30px] md:flex-nowrap flex-wrap">
             <select name="city" className="md:w-[240px] w-[100%] h-[56px] rounded-[4px] px-[20px] font-[500] text-[16px] text-[#121212] bg-white">
               {" "}

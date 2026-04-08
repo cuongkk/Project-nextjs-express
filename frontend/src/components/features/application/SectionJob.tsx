@@ -34,19 +34,6 @@ export const SectionJob = () => {
       });
   }, [language, city, company, keyword, position, workingForm, page]);
 
-  const handleFilterPosition = (event: any) => {
-    const value = event.target.value;
-
-    const params = new URLSearchParams(searchParams.toString());
-    if (value) {
-      params.set("position", value);
-    } else {
-      params.delete("position");
-    }
-
-    router.push(`/search?${params.toString()}`);
-  };
-
   const handlePagination = (value: number) => {
     setPage(value);
   };
@@ -55,7 +42,11 @@ export const SectionJob = () => {
     <>
       <div className="py-[60px]">
         <div className="contain">
-          <div className="flex items-center justify-end mb-[20px]">
+          <div className="flex items-center justify-between mb-[20px]">
+            <div>
+              <h2 className="font-[700] sm:text-[24px] text-[20px] text-[#121212] mb-[4px]">Việc làm nổi bật</h2>
+              <p className="text-[14px] text-[#6B6B6B]">Khám phá những việc làm hàng đầu trên ITJobs.</p>
+            </div>
             <button
               type="button"
               onClick={() => router.push(`/search${searchParams.toString() ? `?${searchParams.toString()}` : ""}`)}

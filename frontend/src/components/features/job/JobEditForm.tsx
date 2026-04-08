@@ -103,12 +103,13 @@ export const JobEditForm = (props: { id: string }) => {
         }
         if (result.code === "success") {
           toast.success(result.message);
+          window.location.reload();
         }
       });
   };
   return (
     <>
-      <Toaster richColors position="top-right" />
+      <Toaster richColors position="top-right" toastOptions={{ duration: 1000 }} />
       {jobDetail && (
         <form className="grid sm:grid-cols-2 grid-cols-1 gap-x-[20px] gap-y-[15px]" id="editForm" onSubmit={handleSubmit(onSubmit) as any}>
           <div className="sm:col-span-2">

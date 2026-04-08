@@ -10,7 +10,7 @@ import { Pagination } from "@/components/ui/Pagination";
 
 interface CvListProps {
   sortOrder: "newest" | "oldest";
-  statusFilter: "all" | "initial" | "approved" | "rejected";
+  statusFilter: "all" | "pending" | "viewed" | "accepted" | "rejected";
 }
 
 export const CompanyCvList = ({ sortOrder, statusFilter }: CvListProps) => {
@@ -75,23 +75,20 @@ export const CompanyCvList = ({ sortOrder, statusFilter }: CvListProps) => {
   };
 
   const handleDelete = (id: string) => {
-    const result = window.confirm("Bạn có chắc muốn xóa CV này?");
-    if (result) {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/applications/${id}`, {
-        method: "DELETE",
-        credentials: "include", // Gửi kèm cookie
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.code == "error") {
-            toast.error(data.message);
-          }
-          if (data.code == "success") {
-            toast.success(data.message);
-            setCount(count + 1);
-          }
-        });
-    }
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/applications/${id}`, {
+      method: "DELETE",
+      credentials: "include", // Gửi kèm cookie
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.code == "error") {
+          toast.error(data.message);
+        }
+        if (data.code == "success") {
+          toast.success(data.message);
+          setCount(count + 1);
+        }
+      });
   };
 
   const sortedList = [...listCV].sort((a, b) => {
@@ -104,7 +101,7 @@ export const CompanyCvList = ({ sortOrder, statusFilter }: CvListProps) => {
 
   return (
     <>
-      <Toaster richColors position="top-right" />
+      <Toaster richColors position="top-right" toastOptions={{ duration: 1000 }} />
       {isLoaded && finalList.length === 0 ? (
         <p>Không có CV nào để quản lý.</p>
       ) : (
@@ -159,8 +156,8 @@ export const CompanyCvList = ({ sortOrder, statusFilter }: CvListProps) => {
                       {" "}
                       Xem
                     </Link>
-                    {item.status !== "approved" && (
-                      <button className="bg-[#9FDB7C] rounded-[4px] font-[400] text-[14px] text-black inline-block py-[8px] px-[20px]" onClick={() => handleChangeStatus(item.id, "approved")}>
+                    {item.status !== "accepted" && (
+                      <button className="bg-[#9FDB7C] rounded-[4px] font-[400] text-[14px] text-black inline-block py-[8px] px-[20px]" onClick={() => handleChangeStatus(item.id, "accepted")}>
                         {" "}
                         Duyệt
                       </button>

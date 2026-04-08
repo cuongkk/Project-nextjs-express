@@ -1,126 +1,130 @@
-import { useAuth } from "@/hooks/useAuth";
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { FaAngleDown, FaAngleRight } from "react-icons/fa6";
+import { FaAngleDown } from "react-icons/fa6";
 
-export const HeaderMenu = (props: { showMenu: boolean }) => {
-  const { showMenu } = props;
-  const { isLogin, isAuthLoaded } = useAuth();
-  const menuList = [
-    {
-      name: "Việc Làm IT",
-      link: "#",
-      isLogin: undefined,
-      children: [
-        {
-          name: "Việc làm IT theo kỹ năng",
-          link: "#",
-          children: [
-            {
-              name: "ReactJS",
-              link: `/search?language=ReactJS`,
-              children: null,
-            },
-            {
-              name: "PHP",
-              link: `/search?language=PHP`,
-              children: null,
-            },
-            {
-              name: "NodeJS",
-              link: `/search?language=NodeJS`,
-              children: null,
-            },
-          ],
-        },
-        {
-          name: "Việc làm IT theo thành phố",
-          link: "#",
-          children: [
-            {
-              name: "Hà Nội",
-              link: `/search?city=Hà Nội`,
-              children: null,
-            },
-            {
-              name: "Đà Nẵng",
-              link: `/search?city=Đà Nẵng`,
-              children: null,
-            },
-            {
-              name: "Hải Phòng",
-              link: `/search?city=Hải Phòng`,
-              children: null,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: "Top Công Ty IT",
-      link: "/company/list",
-      isLogin: undefined,
+type MenuItem = {
+  label: string;
+  query: Record<string, string>;
+};
 
-      children: [
-        {
-          name: "FPT Software",
-          link: `/search?company=FPT Software`,
-          children: null,
-        },
-        {
-          name: "Techcombank",
-          link: `/search?company=Techcombank`,
-          children: null,
-        },
-        {
-          name: "MBBank",
-          link: `/search?company=MBBank`,
-          children: null,
-        },
-      ],
-    },
-  ];
+type MenuSection = {
+  key: string;
+  name: string;
+  items: MenuItem[];
+};
+
+type MenuListProps = {
+  sections: MenuSection[];
+};
+const buildSearchHref = (query: Record<string, string>) => {
+  const params = new URLSearchParams();
+  Object.entries(query).forEach(([key, value]) => {
+    if (value) params.set(key, value);
+  });
+  params.set("page", "1");
+
+  return `/search?${params.toString()}`;
+};
+
+const JobMegaMenu = ({ sections, onClose }: { sections: MenuSection[]; onClose?: () => void }) => {
+  if (!sections.length) return null;
+
+  return (
+    <li className="relative group flex items-center lg:p-[10px] p-[5px] bg-[#000071] cursor-pointer">
+      <span className="font-[600] text-[16px] text-white flex-1 ">Công việc</span>
+      <FaAngleDown className="text-white ml-1 hidden lg:block" />
+
+      {/* Level 1 */}
+      <ul className="absolute top-full left-0 w-[260px] bg-[#000065] rounded-[4px] hidden group-hover:block z-20">
+        {sections.map((section) => (
+          <li key={section.key} className="relative group/sub">
+            <div className="flex justify-between items-center px-[16px] py-[10px] hover:bg-[#000096] text-white cursor-pointer">
+              {section.name}
+              <FaAngleDown className="-rotate-90" />
+            </div>
+
+            {/* Level 2 */}
+            <ul className="absolute top-0 left-full w-[260px] bg-[#000065] rounded-[4px] hidden group-hover/sub:block max-h-[400px] overflow-y-auto">
+              {section.items.map((item) => (
+                <li key={item.label}>
+                  <Link href={buildSearchHref(item.query)} className="block px-[16px] py-[10px] text-white hover:bg-[#000096]" onClick={onClose}>
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </li>
+        ))}
+      </ul>
+    </li>
+  );
+};
+
+const MenuList = ({ sections, onClose }: MenuListProps & { onClose?: () => void }) => {
+  if (!sections.length) return null;
+
+  return (
+    <ul className="flex lg:flex-row flex-col gap-x-[16px]">
+      <JobMegaMenu sections={sections} onClose={onClose} />
+    </ul>
+  );
+};
+
+export const HeaderMenu = (props: { showMenu: boolean; onClose: () => void }) => {
+  const { showMenu, onClose } = props;
+  const [sections, setSections] = useState<MenuSection[]>([]);
+
+  useEffect(() => {
+    const fetchMenuData = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs/all`, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        const data = await res.json();
+
+        if (data.code !== "success") return;
+
+        const skills: MenuItem[] = (data.techList || []).map((tech: string) => ({
+          label: tech,
+          query: { technologies: tech },
+        }));
+
+        const cities: MenuItem[] = (data.listCity || []).map((city: { name: string }) => ({
+          label: city.name,
+          query: { city: city.name },
+        }));
+
+        const companies: MenuItem[] = (data.companies || []).map((company: { companyName: string }) => ({
+          label: company.companyName,
+          query: { company: company.companyName },
+        }));
+
+        const title: MenuItem[] = (data.title || []).map((title: string) => ({
+          label: title.charAt(0).toUpperCase() + title.slice(1),
+          query: { title: title },
+        }));
+        setSections([
+          { key: "skills", name: "Công việc theo kĩ năng", items: skills },
+          { key: "cities", name: "Công việc theo thành phố", items: cities },
+          { key: "companies", name: "Công việc theo công ty", items: companies },
+          { key: "titles", name: "Công việc theo chuyên môn", items: title },
+        ]);
+      } catch (error) {
+        // ignore
+      }
+    };
+
+    fetchMenuData();
+  }, []);
+
   return (
     <>
-      <nav className={"lg:block " + (showMenu ? "fixed top-0 left-0 w-[280px] h-full bg-[#000065] z-50" : "hidden")}>
-        <ul className="flex lg:flex-row flex-col gap-y-[10px] flex-wrap">
-          {menuList.map((item, index) => {
-            return (
-              <li
-                key={index}
-                className={"flex items-center relative group/sub-1 flex-wrap lg:p-[10px] p-0 lg:w-auto w-full " + (item.isLogin !== undefined && item.isLogin !== isLogin ? "hidden" : "")}
-              >
-                <Link href={item.link} className="font-[600] text-[16px] text-white lg:flex-none flex-1">
-                  {item.name}
-                </Link>
-                {item.children && <FaAngleDown className="text-[16px] text-white" />}
-                {item.children && (
-                  <ul className="bg-[#000065] rounded-[4px] lg:absolute relative lg:top-[100%] top-0 left-0 lg:w-[280px] w-full hidden group-hover/sub-1:block z-10">
-                    {" "}
-                    {item.children.map((menuSub1, indexSub1) => (
-                      <li key={indexSub1} className="py-[10px] px-[16px] flex items-center justify-between hover:bg-[#000096] rounded-[4px] group/sub-2">
-                        <Link href={menuSub1.link} className="font-[600] text-[16px] text-white">
-                          {menuSub1.name}
-                        </Link>
-                        {menuSub1.children && <FaAngleRight className="text-[16px] text-white" />}
-                        {menuSub1.children && (
-                          <ul className="bg-[#000065] rounded-[4px] absolute top-0 left-[100%] w-[280px] hidden group-hover/sub-2:block">
-                            {menuSub1.children.map((menuSub2, indexSub2) => (
-                              <li key={indexSub2} className="py-[10px] px-[16px] flex items-center justify-between hover:bg-[#000096] rounded-[4px]">
-                                <Link href={menuSub2.link} className="font-[600] text-[16px] text-white">
-                                  {menuSub2.name}
-                                </Link>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+      <nav className={`${showMenu ? "block" : "hidden"} lg:block bg-[#000065] lg:static ` + (showMenu ? "fixed top-0 left-0 w-[280px] h-full z-50 lg:w-auto lg:h-auto" : "")}>
+        <MenuList sections={sections} onClose={onClose} />
       </nav>
     </>
   );

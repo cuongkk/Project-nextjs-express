@@ -2,7 +2,6 @@ import mongoose from "mongoose";
 
 const schema = new mongoose.Schema(
   {
-    // ADDED: Explicit user ownership for CV
     userId: {
       type: String,
       required: true,

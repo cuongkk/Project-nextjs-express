@@ -14,12 +14,22 @@ connectDB();
 const app = express();
 const port = 5000;
 
+const allowedOrigins = [
+  "http://localhost:3000", // dev
+  "http://localhost", // nginx
+  "https://yourdomain.com", // production
+];
+
 app.use(
   cors({
-    origin: "http://localhost:3000",
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true, // Cho phép gửi cookie từ frontend
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
   }),
 );
 // Cho phép Express xử lý dữ liệu JSON

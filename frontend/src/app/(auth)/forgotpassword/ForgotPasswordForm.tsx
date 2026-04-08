@@ -98,7 +98,7 @@ export const ForgotPasswordForm = () => {
 
   return (
     <>
-      <Toaster richColors position="top-right" />
+      <Toaster richColors position="top-right" toastOptions={{ duration: 1000 }} />
 
       {step === 1 && (
         <form onSubmit={handleSubmit(handleSendOtp) as any} className="grid grid-cols-1 gap-y-[15px]">

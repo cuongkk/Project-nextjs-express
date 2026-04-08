@@ -6,17 +6,15 @@ const schema = new mongoose.Schema(
     companyId: String,
     jobId: String,
     cvId: String,
-    // FIXED: Expanded application status lifecycle
     status: {
       type: String,
-      enum: ["pending", "reviewing", "shortlisted", "rejected", "accepted"],
+      enum: ["pending", "viewed", "rejected", "accepted"],
       default: "pending",
     },
     viewedByCompany: {
       type: Boolean,
       default: false,
     },
-    // ADDED: History of status changes
     history: [
       {
         status: String,

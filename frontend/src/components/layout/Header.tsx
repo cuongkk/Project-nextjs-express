@@ -21,9 +21,11 @@ export const Header = () => {
             <Link href="/" className="font-[800] sm:text-[28px] text-[20px] text-white lg:flex-none flex-1">
               ITJobs
             </Link>
-            <HeaderMenu showMenu={showMenu} />
-            <HeaderNotification />
-            <HeaderAccount />
+            <HeaderMenu showMenu={showMenu} onClose={() => setShowMenu(false)} />
+            <div className="flex">
+              <HeaderNotification />
+              <HeaderAccount />
+            </div>
             <button className="lg:hidden text-white text-[20px] ml-[12px]" onClick={handleShowMenu}>
               <FaBars />
             </button>

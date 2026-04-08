@@ -7,6 +7,7 @@ export type JobSearchFilters = {
   workingForm?: string;
   salaryMin?: number;
   salaryMax?: number;
+  technologies?: string[];
   page?: number;
 };
 
@@ -48,6 +49,11 @@ export async function searchJobs(filters: JobSearchFilters, options?: { signal?:
   if (filters.workingForm) params.set("workingForm", filters.workingForm);
   if (filters.salaryMin != null) params.set("salaryMin", String(filters.salaryMin));
   if (filters.salaryMax != null) params.set("salaryMax", String(filters.salaryMax));
+  if (filters.technologies && filters.technologies.length) {
+    filters.technologies.forEach((tech) => {
+      params.append("technologies", tech);
+    });
+  }
 
   const page = filters.page ?? 1;
   params.set("page", String(page));

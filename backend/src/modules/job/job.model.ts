@@ -12,7 +12,6 @@ const schema = new mongoose.Schema(
     description: String,
     images: Array,
     city: String,
-    // ADDED: Job lifecycle fields
     status: {
       type: String,
       enum: ["active", "closed", "expired"],

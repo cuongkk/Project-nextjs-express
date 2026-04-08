@@ -71,7 +71,7 @@ export default function Page() {
 
   return (
     <>
-      <Toaster richColors position="top-right" />
+      <Toaster richColors position="top-right" toastOptions={{ duration: 1000 }} />
 
       <div className="py-[60px]">
         <div className="contain">
@@ -93,9 +93,11 @@ export default function Page() {
                   <Link href={`/job/edit/${item.id}`} className="bg-[#FFB200] rounded-[4px] text-black py-[8px] px-[20px]">
                     Sửa
                   </Link>
-                  <button onClick={() => openDeleteConfirm(item.id)} className="bg-[#FF0000] rounded-[4px] text-white py-[8px] px-[20px]">
-                    Xóa
-                  </button>
+                  {item.expiresAt && new Date(item.expiresAt) < new Date() && (
+                    <button onClick={() => openDeleteConfirm(item.id)} className="bg-[#FF0000] rounded-[4px] text-white py-[8px] px-[20px]">
+                      Xóa
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

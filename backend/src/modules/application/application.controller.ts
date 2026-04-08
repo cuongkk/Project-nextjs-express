@@ -63,3 +63,12 @@ export const companyChangeStatus = async (req: AccountRequest, res: Response) =>
     res.json({ code: "error", message: "Thất bại!" });
   }
 };
+
+export const removeByUser = async (req: AccountRequest, res: Response) => {
+  try {
+    const result = await applicationService.removeByUser(req);
+    res.json(result);
+  } catch (error) {
+    res.json({ code: "error", message: "Thất bại!" });
+  }
+};

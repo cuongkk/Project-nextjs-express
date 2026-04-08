@@ -1,6 +1,7 @@
 import Job from "../job/job.model";
 import AccountCompany from "../company/company.model";
 import City from "../city/city.model";
+import mongoose from "mongoose";
 import { PAGINATION } from "../../configs/variable.config";
 
 export const search = async (query: any) => {
@@ -12,23 +13,32 @@ export const search = async (query: any) => {
 
   if (query.language || query.technologies) {
     const tech = query.language || query.technologies;
-    find.technologies = tech;
+
+    if (Array.isArray(tech)) {
+      find.technologies = { $in: tech };
+    } else {
+      find.technologies = tech;
+    }
   }
 
   if (query.city) {
-    const city = await City.findOne({
-      name: query.city,
+    let cityId = String(query.city);
+
+    // Hỗ trợ cả truyền city theo _id hoặc theo tên
+    if (!mongoose.Types.ObjectId.isValid(cityId)) {
+      const cityByName = await City.findOne({ name: cityId });
+      if (cityByName) {
+        cityId = cityByName.id;
+      }
+    }
+
+    const listAccountCompanyInCity = await AccountCompany.find({
+      city: cityId,
     });
 
-    if (city) {
-      const listAccountCompanyInCity = await AccountCompany.find({
-        city: city.id,
-      });
-
-      find.companyId = {
-        $in: listAccountCompanyInCity.map((item) => item.id),
-      };
-    }
+    find.companyId = {
+      $in: listAccountCompanyInCity.map((item) => item.id),
+    };
   }
 
   if (query.company) {
@@ -50,6 +60,25 @@ export const search = async (query: any) => {
   if (query.workingForm) {
     find.workingForm = query.workingForm;
   }
+
+  // Lọc theo khoảng lương nếu có
+  const salaryMin = query.salaryMin ? Number(query.salaryMin) : undefined;
+  const salaryMax = query.salaryMax ? Number(query.salaryMax) : undefined;
+
+  if (!Number.isNaN(salaryMin) && !Number.isNaN(salaryMax) && salaryMin !== undefined && salaryMax !== undefined) {
+    // Job có khoảng lương giao nhau với khoảng người dùng chọn
+    find.salaryMin = { $lte: salaryMax };
+    find.salaryMax = { $gte: salaryMin };
+  } else if (!Number.isNaN(salaryMin) && salaryMin !== undefined) {
+    find.salaryMax = { $gte: salaryMin };
+  } else if (!Number.isNaN(salaryMax) && salaryMax !== undefined) {
+    find.salaryMin = { $lte: salaryMax };
+  }
+
+  // Chỉ tìm các job còn hiệu lực (đang active và chưa hết hạn)
+  const now = new Date();
+  find.status = "active";
+  find.$or = [{ expiresAt: { $exists: false } }, { expiresAt: { $gte: now } }];
 
   const limitItems = PAGINATION.SEARCH_JOB_PAGE_SIZE;
   let page = 1;

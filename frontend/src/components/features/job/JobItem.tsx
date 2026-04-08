@@ -8,15 +8,15 @@ export const JobItem = (props: { item: any }) => {
   const { item } = props;
   return (
     <>
-      <div className="relative overflow-hidden h-[125px] z-0">
+      <div className="relative overflow-hidden z-0">
         <div className="rounded-[8px] border-[1px] border-[#DEDEDE] card-item p-[10px] flex flex-col gap-y-[5px]">
           <div className=" flex flex-row items-center gap-x-[20px]">
-            <div className="h-[64px] aspect-[1/1] rounded-[8px] bg-white p-[2px] inner-image text-left">
+            <div className="h-[80px] aspect-[1/1] rounded-[8px] bg-white p-[2px] inner-image text-left">
               <Link href={`/job/${item.id}`}>
                 <img src={item.companyLogo} alt={item.title} className="w-[100%] h-[100%] object-contain" />
               </Link>
             </div>
-            <div className="flex-1 h-[100%] flex flex-col items-start">
+            <div className="flex-1 h-[100%] flex flex-col">
               <h3 className="font-[700] text-[16px] text-left mb-[6px]">
                 <Link
                   href={`/job/${item.id}`}
@@ -31,7 +31,7 @@ export const JobItem = (props: { item: any }) => {
                   {item.title}
                 </Link>
               </h3>
-              <div className="font-[400] text-[12px] text-[#121212] mb-[12px] text-center">{item.companyName}</div>
+              <div className="font-[400] text-[12px] text-[#121212] items-start">{item.companyName}</div>
             </div>
           </div>
           <div className="flex flex-row items-center gap-x-[12px]">

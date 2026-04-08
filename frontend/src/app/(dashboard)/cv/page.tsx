@@ -24,10 +24,31 @@ export default function Page() {
   const role: Role | null = infoCompany ? "company" : infoUser ? "user" : null; // FIXED: use Role type
 
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
-  const [statusFilter, setStatusFilter] = useState<"all" | "initial" | "approved" | "rejected">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "viewed" | "accepted" | "rejected">("all");
   const [jobFilter, setJobFilter] = useState<string>("all");
   const [companyJobs, setCompanyJobs] = useState<CompanyJob[]>([]);
   const [jobsError, setJobsError] = useState<string | null>(null); // ADDED: basic error state
+
+  useEffect(() => {
+    if (!isAuthLoaded) return;
+    if (!isLogin || role !== "company") return;
+
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs?limit=1000`, {
+      method: "GET",
+      credentials: "include",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.code === "success") {
+          setCompanyJobs(Array.isArray(data.jobs) ? data.jobs : []);
+        } else {
+          setJobsError(data.message || "Failed to load jobs");
+        }
+      })
+      .catch((error) => {
+        setJobsError("An error occurred while loading jobs");
+      });
+  }, []);
 
   useEffect(() => {
     if (!isAuthLoaded) return;
@@ -70,8 +91,9 @@ export default function Page() {
               <span className="font-[700]">Trạng thái:</span>
               <select className="border border-[#DEDEDE] rounded-[4px] px-2 py-1 text-[14px]" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)}>
                 <option value="all">Tất cả</option>
-                <option value="initial">Chưa duyệt</option>
-                <option value="approved">Đã duyệt</option>
+                <option value="pending">Chờ xử lý</option>
+                <option value="viewed">Đã xem</option>
+                <option value="accepted">Đã chấp nhận</option>
                 <option value="rejected">Từ chối</option>
               </select>
             </div>
@@ -89,10 +111,7 @@ export default function Page() {
               </div>
             )}
           </div>
-          {jobsError &&
-            role === "company" && ( // ADDED: show job fetch error when needed
-              <p className="text-sm text-red-600 mb-2">{jobsError}</p>
-            )}
+          {jobsError && role === "company" && <p className="text-sm text-red-600 mb-2">{jobsError}</p>}
           <CvList role={role} sortOrder={sortOrder} statusFilter={statusFilter} jobIdFilter={role === "company" ? jobFilter : undefined} />
         </div>
       </div>

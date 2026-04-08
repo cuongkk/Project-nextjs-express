@@ -26,7 +26,6 @@ export const authenticate = async (req: AccountRequest, res: Response, next: Nex
   try {
     let token = getTokenFromRequest(req);
 
-    // Nếu không có accessToken thì thử làm mới bằng refreshToken trong cookie
     if (!token) {
       const refreshResult: any = await authService.refreshToken(req as any);
 
@@ -40,7 +39,6 @@ export const authenticate = async (req: AccountRequest, res: Response, next: Nex
 
       const { accessToken, refreshToken } = refreshResult.tokens as { accessToken: string; refreshToken: string };
 
-      // Set lại cookie giống auth.controller
       res.cookie("accessToken", accessToken, {
         maxAge: 15 * 60 * 1000,
         httpOnly: true,

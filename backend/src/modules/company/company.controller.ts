@@ -65,4 +65,3 @@ export const detail = async (req: Request, res: Response) => {
   }
 };
 
-// Các hành động với CV đã được tách sang modules/cv/cv.controller

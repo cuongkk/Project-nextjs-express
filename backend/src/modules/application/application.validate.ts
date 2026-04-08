@@ -36,7 +36,7 @@ export const applyPost = async (req: Request, res: Response, next: NextFunction)
 
 export const companyChangeStatusPatch = async (req: Request, res: Response, next: NextFunction) => {
   const schema = Joi.object({
-    status: Joi.string().trim().valid("initial", "approved", "rejected").required().messages({
+    status: Joi.string().trim().valid("accepted", "rejected").required().messages({
       "string.empty": "Vui lòng chọn trạng thái!",
       "any.only": "Trạng thái không hợp lệ!",
     }),

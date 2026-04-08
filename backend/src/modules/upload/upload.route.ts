@@ -1,17 +1,42 @@
 import { Router } from "express";
 import * as uploadController from "./upload.controller";
 import multer from "multer";
-import { storage } from "../../utils/cloudinary.helper";
+import { upload, uploadToCloudinary } from "../../utils/cloudinary.helper";
 
 const router = Router();
 
-const upload = multer({ storage: storage });
+router.post(
+  "/",
+  upload.single("file"),
+  async (req, res) => {
+    try {
+      const result = await uploadToCloudinary(req.file!.path);
 
-// UPLOADS
-// Generic upload endpoint, type can be specified in body (e.g., { type: "image" })
-router.post("/", upload.single("file"), uploadController.imagePost);
+      res.json({
+        url: result.secure_url,
+      });
+    } catch (err) {
+      res.status(500).json({ message: "Upload failed" });
+    }
+  },
+  uploadController.imagePost,
+);
 
-// Backward-compatible alias
-router.post("/images", upload.single("file"), uploadController.imagePost);
+router.post(
+  "/images",
+  upload.single("file"),
+  async (req, res) => {
+    try {
+      const result = await uploadToCloudinary(req.file!.path);
+
+      res.json({
+        url: result.secure_url,
+      });
+    } catch (err) {
+      res.status(500).json({ message: "Upload failed" });
+    }
+  },
+  uploadController.imagePost,
+);
 
 export default router;

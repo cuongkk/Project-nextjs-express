@@ -4,7 +4,7 @@
 import { useForm } from "react-hook-form";
 import { Toaster, toast } from "sonner";
 import { useState } from "react";
-import { setReloadToast } from "@/utils/toast.helper";
+import { setReloadToast } from "@/utils/toast";
 
 const roles = [
   { value: "user", label: "Ứng viên" },
@@ -47,7 +47,7 @@ export const FormRegister = () => {
 
   return (
     <>
-      <Toaster richColors position="top-right" />
+      <Toaster richColors position="top-right" toastOptions={{ duration: 1000 }} />
       <form onSubmit={handleSubmit(onSubmit) as any} className="grid grid-cols-1 gap-y-[15px]">
         <div>
           <label className="block font-[500] text-[14px] text-black mb-[5px]">Vai trò *</label>

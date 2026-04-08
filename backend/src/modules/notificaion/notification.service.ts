@@ -1,11 +1,9 @@
-// ADDED: Notification service for creating and querying notifications
 import Notification from "./notification.model";
 import { AccountRequest } from "../../interfaces/request.interface";
 
-export type NotificationType = "CV_ACCEPTED" | "NEW_APPLICATION"; // ADDED
+export type NotificationType = "CV_ACCEPTED" | "NEW_APPLICATION";
 
 interface CreateNotificationPayload {
-  // ADDED
   userId: string;
   type: NotificationType;
   title: string;
@@ -17,8 +15,8 @@ export const createNotification = async (payload: CreateNotificationPayload) => 
   const { userId, type, title, message, data } = payload;
 
   await Notification.create({
-    userId,
-    type,
+    receiverId: userId,
+    receiverType: type,
     title,
     message,
     data: data || {},
@@ -28,14 +26,13 @@ export const createNotification = async (payload: CreateNotificationPayload) => 
   });
 };
 
-// ADDED: list latest notifications (max 6) for current account
 export const getNotifications = async (req: AccountRequest) => {
   const userId = req.account.id;
 
   const now = new Date();
 
   const notifications = await Notification.find({
-    userId,
+    receiverId: userId,
     $or: [{ read: false }, { expiresAt: { $gt: now } }],
   })
     .sort({ createdAt: -1 })
@@ -48,13 +45,12 @@ export const getNotifications = async (req: AccountRequest) => {
   };
 };
 
-// ADDED: count notifications for badge
 export const getNotificationCount = async (req: AccountRequest) => {
   const userId = req.account.id;
   const now = new Date();
 
   const count = await Notification.countDocuments({
-    userId,
+    receiverId: userId,
     $or: [{ read: false }, { expiresAt: { $gt: now } }],
   });
 
@@ -65,14 +61,13 @@ export const getNotificationCount = async (req: AccountRequest) => {
   };
 };
 
-// ADDED: mark all as read and set expiry +1h
 export const markAllAsRead = async (req: AccountRequest) => {
   const userId = req.account.id;
   const now = new Date();
   const expiresAt = new Date(now.getTime() + 60 * 60 * 1000); // 1h
 
   await Notification.updateMany(
-    { userId, read: false },
+    { receiverId: userId, read: false },
     {
       $set: {
         read: true,

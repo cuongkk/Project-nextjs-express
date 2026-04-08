@@ -7,10 +7,8 @@ const schema = new mongoose.Schema(
     password: String,
     city: String,
     address: String,
-    companyModel: String,
     companyEmployees: String,
     workingTime: String,
-    workOvertime: String,
     phone: String,
     description: String,
     logo: String,
@@ -20,6 +18,6 @@ const schema = new mongoose.Schema(
   },
 );
 
-const AccountCompany = mongoose.model("AccountCompany", schema, "accounts-company");
+const AccountCompany = mongoose.model("AccountCompany", schema, "companies");
 
 export default AccountCompany;

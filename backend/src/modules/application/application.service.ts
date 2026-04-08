@@ -5,7 +5,7 @@ import Job from "../job/job.model";
 import AccountCompany from "../company/company.model";
 import CV from "../cv/cv.model";
 import { PAGINATION } from "../../configs/variable.config";
-import Notification from "../notificaion/notification.model"; // FIXED: use Notification model instead of service
+import Notification from "../notificaion/notification.model";
 import { sendMail } from "../../utils/mail.helper"; // ADDED
 
 export const apply = async (req: AccountRequest & { file?: any }) => {
@@ -96,10 +96,10 @@ export const apply = async (req: AccountRequest & { file?: any }) => {
             companyId,
             jobId,
             cvId: finalCvId,
-            status: "pending", // FIXED: initial status now "pending"
+            status: "pending",
             history: [
               {
-                status: "pending", // ADDED: history entry
+                status: "pending",
                 updatedAt: now,
               },
             ],
@@ -110,13 +110,11 @@ export const apply = async (req: AccountRequest & { file?: any }) => {
 
       application = createdApp;
 
-      // FIXED: Notification uses receiverId/receiverType
       await Notification.create(
         [
           {
             receiverId: companyId,
             receiverType: "company",
-            type: "NEW_APPLICATION",
             title: "Đơn ứng tuyển mới",
             message: `Bạn có đơn ứng tuyển mới cho công việc "${job.title}"`,
             data: {
@@ -157,7 +155,7 @@ export const userList = async (req: AccountRequest) => {
   const find: any = { userId };
 
   const statusParam = (req.query.status as string) || "";
-  const allowedStatuses = ["pending", "reviewing", "shortlisted", "rejected", "accepted"]; // ADDED
+  const allowedStatuses = ["pending", "viewed", "rejected", "accepted"]; // UPDATED
   if (allowedStatuses.includes(statusParam)) {
     // FIXED: use new status values
     find.status = statusParam;
@@ -238,7 +236,7 @@ export const companyList = async (req: AccountRequest) => {
   const find: any = { companyId };
 
   const statusParam = (req.query.status as string) || "";
-  const allowedStatuses = ["pending", "reviewing", "shortlisted", "rejected", "accepted"]; // ADDED
+  const allowedStatuses = ["pending", "viewed", "rejected", "accepted"]; // UPDATED
   if (allowedStatuses.includes(statusParam)) {
     // FIXED: use new status values
     find.status = statusParam;
@@ -313,6 +311,11 @@ export const companyDetail = async (req: AccountRequest) => {
 
   if (!app.viewedByCompany) {
     app.viewedByCompany = true;
+    if (app.status === "pending") {
+      app.status = "viewed" as any;
+      app.history = app.history || [];
+      app.history.push({ status: "viewed", updatedAt: new Date() });
+    }
     await app.save();
   }
 
@@ -334,18 +337,15 @@ export const companyChangeStatus = async (req: AccountRequest) => {
   if (!app) {
     return { code: "error", message: "Không tìm thấy đơn ứng tuyển!" };
   }
-  // FIXED: ensure new status values only
-  const allowedStatuses = ["pending", "reviewing", "shortlisted", "rejected", "accepted"];
+  const allowedStatuses = ["accepted", "rejected"];
   if (!allowedStatuses.includes(status)) {
     return { code: "error", message: "Trạng thái không hợp lệ!" };
   }
 
   if (app.status === "accepted" && status === "accepted") {
-    // FIXED: prevent double-accept
     return { code: "error", message: "Đơn ứng tuyển này đã được chấp nhận trước đó!" };
   }
 
-  // ADDED: ensure job belongs to company and CV belongs to user
   const job = await Job.findOne({ _id: app.jobId, companyId });
   if (!job) {
     return { code: "error", message: "Công việc không hợp lệ cho tài khoản này!" };
@@ -359,29 +359,25 @@ export const companyChangeStatus = async (req: AccountRequest) => {
   if (status === "accepted") {
     const existingAccepted = await Application.findOne({ jobId: app.jobId, status: "accepted" });
     if (existingAccepted && existingAccepted._id.toString() !== app._id.toString()) {
-      // FIXED: only one accepted application per job
       return { code: "error", message: "Công việc này đã có ứng viên được chấp nhận!" };
     }
   }
 
-  app.status = status;
-  app.history = app.history || []; // ADDED: ensure history exists
-  app.history.push({ status, updatedAt: new Date() }); // ADDED
+  app.status = status as any;
+  app.history = app.history || [];
+  app.history.push({ status, updatedAt: new Date() });
   await app.save();
 
   if (status === "accepted") {
     try {
-      // ADDED: close job when CV accepted
       job.status = "closed";
       await job.save();
 
-      // FIXED: notification for user using receiverId/receiverType
       await Notification.create({
         receiverId: app.userId || "",
         receiverType: "user",
-        type: "CV_ACCEPTED",
-        title: "CV đã được chấp nhận",
-        message: `CV của bạn cho công việc ${job.title} đã được chấp nhận.`,
+        title: "Đơn ứng tuyển đã được chấp nhận",
+        message: `Đơn ứng tuyển của bạn cho công việc ${job.title} đã được chấp nhận.`,
         data: {
           applicationId: app._id.toString(),
           jobId: app.jobId,
@@ -390,13 +386,67 @@ export const companyChangeStatus = async (req: AccountRequest) => {
       });
 
       if (cv.email) {
-        const emailContent = `<p>Your CV has been accepted.</p>`; // FIXED: simple email template kept
-        await sendMail(cv.email, "Your CV has been accepted", emailContent);
+        const emailContent = `<p>Đơn ứng tuyển của bạn đã được chấp nhận.</p>`;
+        await sendMail(cv.email, "Đơn ứng tuyển của bạn đã được chấp nhận", emailContent);
       }
-    } catch {
-      // ignore notification or email failure
-    }
+    } catch {}
+  } else if (status === "rejected") {
+    try {
+      await Notification.create({
+        receiverId: app.userId || "",
+        receiverType: "user",
+        title: "Đơn ứng tuyển đã bị từ chối",
+        message: `Đơn ứng tuyển của bạn cho công việc ${job.title} đã bị từ chối.`,
+        data: {
+          applicationId: app._id.toString(),
+          jobId: app.jobId,
+          cvId: app.cvId,
+        },
+      });
+
+      if (cv.email) {
+        const emailContent = `<p>Đơn ứng tuyển của bạn đã bị từ chối.</p>`;
+        await sendMail(cv.email, "Đơn ứng tuyển của bạn đã bị từ chối", emailContent);
+      }
+    } catch {}
   }
 
   return { code: "success", message: "Cập nhật trạng thái đơn ứng tuyển thành công!" };
+};
+
+// User: xóa đơn ứng tuyển (chỉ khi đã bị từ chối)
+export const removeByUser = async (req: AccountRequest) => {
+  const userId = req.account.id;
+  const id = req.params.id;
+
+  const application = await Application.findOne({ _id: id, userId });
+
+  if (!application) {
+    return {
+      code: "error",
+      message: "Không tìm thấy đơn ứng tuyển!",
+    };
+  }
+
+  if (application.status !== "rejected") {
+    return {
+      code: "error",
+      message: "Chỉ có thể xóa đơn ứng tuyển khi đã bị từ chối!",
+    };
+  }
+
+  // Nếu CV chỉ được dùng cho duy nhất đơn này thì xóa luôn CV
+  if (application.cvId) {
+    const otherCount = await Application.countDocuments({ cvId: application.cvId, _id: { $ne: application._id } });
+    if (otherCount === 0) {
+      await CV.deleteOne({ _id: application.cvId });
+    }
+  }
+
+  await Application.deleteOne({ _id: id, userId });
+
+  return {
+    code: "success",
+    message: "Đã xóa đơn ứng tuyển!",
+  };
 };

@@ -42,13 +42,18 @@ export const workingFormList = [
 
 export const cvStatusList = [
   {
-    value: "initial",
-    label: "Chưa duyệt",
+    value: "pending",
+    label: "Chờ xử lý",
     color: "#121212",
   },
   {
-    value: "approved",
-    label: "Đã duyệt",
+    value: "viewed",
+    label: "Đã xem",
+    color: "#0088FF",
+  },
+  {
+    value: "accepted",
+    label: "Đã chấp nhận",
     color: "#9FDB7C",
   },
   {
@@ -67,3 +72,10 @@ Bạn cam kết:
 Hệ thống có thể sử dụng thông tin để gợi ý việc làm, gửi thông báo liên quan đến hoạt động tuyển dụng. Nếu bạn không đồng ý, vui lòng không tiếp tục nộp hồ sơ.`;
 
 export const TechList = ["JavaScript", "TypeScript", "Python", "Java", "C#", "PHP", "C++", "SQL", "NoSQL"];
+
+// export const ImageList = [
+//   "https://res.cloudinary.com/dkamd3ghb/image/upload/v1774797116/Commercial_Office_Interior_Designer_Atlanta_Georgia_fdlitc.webp",
+//   "https://placehold.co/600x400/png?text=Slide+2",
+//   "https://placehold.co/600x400/png?text=Slide+3",
+//   "https://res.cloudinary.com/dkamd3ghb/image/upload/v1772610857/cld-sample-3.jpg",
+// ];

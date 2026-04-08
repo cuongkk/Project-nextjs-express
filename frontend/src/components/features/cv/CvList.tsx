@@ -6,11 +6,12 @@ import { useEffect, useState } from "react";
 import { FaCircleCheck } from "react-icons/fa6";
 /* eslint-disable @next/next/no-img-element */
 import { Pagination } from "@/components/ui/Pagination";
+import { toast } from "sonner";
 
 interface CvListProps {
   role: "user" | "company";
   sortOrder: "newest" | "oldest";
-  statusFilter: "all" | "initial" | "approved" | "rejected";
+  statusFilter: "all" | "pending" | "viewed" | "accepted" | "rejected";
   jobIdFilter?: string | null;
 }
 
@@ -34,7 +35,7 @@ export const CvList = ({ role, sortOrder, statusFilter, jobIdFilter }: CvListPro
 
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/applications?${params.toString()}`, {
       method: "GET",
-      credentials: "include", // Gửi kèm cookie
+      credentials: "include",
     })
       .then((res) => res.json())
       .then((data) => {
@@ -59,6 +60,29 @@ export const CvList = ({ role, sortOrder, statusFilter, jobIdFilter }: CvListPro
   });
 
   const finalList = statusFilter === "all" ? sortedList : sortedList.filter((item) => item.status === statusFilter);
+
+  const handleDelete = async (id: string) => {
+    const confirmDelete = window.confirm("Bạn có chắc chắn muốn xóa đơn ứng tuyển này không?");
+    if (!confirmDelete) return;
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/applications/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      const data = await res.json();
+      if (data.code === "error") {
+        toast.error(data.message || "Xóa đơn ứng tuyển thất bại!");
+        return;
+      }
+
+      toast.success(data.message || "Đã xóa đơn ứng tuyển!");
+      setListCV((prev) => prev.filter((item) => item.id !== id));
+    } catch (error) {
+      toast.error("Có lỗi xảy ra, vui lòng thử lại!");
+    }
+  };
 
   return (
     <>
@@ -113,9 +137,11 @@ export const CvList = ({ role, sortOrder, statusFilter, jobIdFilter }: CvListPro
                     <Link href={`cv/${item.id}`} className="bg-[#0088FF] rounded-[4px] font-[400] text-[14px] text-white inline-block py-[8px] px-[20px]">
                       Xem
                     </Link>
-                    <Link href="#" className="bg-[#FF0000] rounded-[4px] font-[400] text-[14px] text-white inline-block py-[8px] px-[20px]">
-                      Xóa
-                    </Link>
+                    {item.status === "rejected" && (
+                      <button type="button" onClick={() => handleDelete(item.id)} className="bg-[#FF0000] rounded-[4px] font-[400] text-[14px] text-white inline-block py-[8px] px-[20px]">
+                        Xóa
+                      </button>
+                    )}
                   </div>
                 </div>
               );

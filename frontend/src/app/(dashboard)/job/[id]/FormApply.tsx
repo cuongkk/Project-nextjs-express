@@ -64,7 +64,7 @@ export const FormApply = ({ jobId }: { jobId: string }) => {
 
   return (
     <>
-      <Toaster richColors position="top-right" />
+      <Toaster richColors position="top-right" toastOptions={{ duration: 1000 }} />
       <form onSubmit={handleSubmit(onSubmit) as any}>
         {/* FILE */}
         <div className="mb-[15px]">

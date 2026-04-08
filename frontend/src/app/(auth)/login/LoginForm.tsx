@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { CheckBox } from "@/components/ui/CheckBox";
 import { useState } from "react";
-import { setReloadToast, showReloadToastIfAny } from "@/utils/toast.helper";
+import { setReloadToast, showReloadToastIfAny } from "@/utils/toast";
 import { mutate } from "swr/_internal";
 
 export const LoginForm = () => {

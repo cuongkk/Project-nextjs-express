@@ -9,22 +9,24 @@ import { useParams } from "next/navigation";
 import { FaArrowRight, FaBriefcase, FaLocationDot, FaUserTie } from "react-icons/fa6";
 import { FormApply } from "./FormApply";
 import { useAuth } from "@/hooks/useAuth";
-import { useRouter } from "next/navigation";
 import { Toaster, toast } from "sonner";
 
 export default function Page() {
   const params = useParams<{ id: string }>();
   const id = params.id as string;
 
-  const { isLogin, infoUser } = useAuth();
-  const router = useRouter();
+  const { isLogin } = useAuth();
 
   const [jobDetail, setJobDetail] = useState<any | null>(null);
   const [showApplyForm, setShowApplyForm] = useState(false);
 
   useEffect(() => {
     const fetchJobDetail = async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs/${id}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs/${id}`, {
+        method: "GET",
+        credentials: "include",
+        cache: "no-store",
+      });
       const data = await res.json();
 
       if (data.code === "success") {
@@ -39,7 +41,7 @@ export default function Page() {
   }, [id]);
   return (
     <>
-      <Toaster richColors position="top-right" />
+      <Toaster richColors position="top-right" toastOptions={{ duration: 1000 }} />
       {jobDetail && (
         <div className="pt-[30px] pb-[60px]">
           <div className="contain">
@@ -60,11 +62,6 @@ export default function Page() {
                   >
                     Ứng tuyển
                   </button>
-                  <div className="grid grid-cols-3 sm:gap-[16px] gap-[8px] mb-[20px]">
-                    {jobDetail.images.map((image: any, index: number) => (
-                      <img key={index} src={image} alt={`Hình ảnh ${index + 1}`} className="w-[100%] aspect-[232/145] rounded-[4px] object-contain border border-[#DEDEDE] p-1" />
-                    ))}
-                  </div>
                 </div>
                 {/* Hết Thông tin công việc */}
                 {/* Mô tả chi tiết */}

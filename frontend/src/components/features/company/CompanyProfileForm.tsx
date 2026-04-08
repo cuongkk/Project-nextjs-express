@@ -12,7 +12,7 @@ import FilePondPluginFileValidateType from "filepond-plugin-file-validate-type";
 import FilePondPluginImagePreview from "filepond-plugin-image-preview";
 import "filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css";
 import { EditorMCE } from "@/components/ui/EditorMCE";
-import { setReloadToast } from "@/utils/toast.helper";
+import { setReloadToast } from "@/utils/toast";
 
 registerPlugin(FilePondPluginFileValidateType, FilePondPluginImagePreview);
 

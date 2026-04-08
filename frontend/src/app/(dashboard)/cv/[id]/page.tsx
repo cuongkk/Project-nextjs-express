@@ -12,7 +12,7 @@ import { toast } from "sonner";
 
 type Role = "user" | "company";
 
-type CvStatus = "initial" | "approved" | "rejected";
+type CvStatus = "pending" | "viewed" | "accepted" | "rejected";
 
 interface ApplicationDetail {
   id: string;
@@ -149,7 +149,8 @@ export default function CvDetailPage() {
   }, [isAuthLoaded, isLogin, role, params, router]);
 
   const handleAccept = async () => {
-    if (!detail || role !== "company" || detail.status !== "initial") return;
+    if (!detail || role !== "company") return;
+    if (detail.status === "accepted" || detail.status === "rejected") return;
 
     setIsUpdating(true);
     try {
@@ -159,14 +160,44 @@ export default function CvDetailPage() {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({ status: "approved" }), // ADDED: Accept CV = approved
+        body: JSON.stringify({ status: "accepted" }),
       });
 
       const data = (await res.json()) as { code: string; message?: string };
 
       if (data.code === "success") {
-        setDetail({ ...detail, status: "approved" });
+        setDetail({ ...detail, status: "accepted" });
         toast.success(data.message || "Đã chấp nhận CV thành công!");
+      } else {
+        toast.error(data.message || "Không thể cập nhật trạng thái CV.");
+      }
+    } catch {
+      toast.error("Có lỗi xảy ra. Vui lòng thử lại.");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!detail || role !== "company") return;
+    if (detail.status === "accepted" || detail.status === "rejected") return;
+
+    setIsUpdating(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/applications/${detail.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ status: "rejected" }),
+      });
+
+      const data = (await res.json()) as { code: string; message?: string };
+
+      if (data.code === "success") {
+        setDetail({ ...detail, status: "rejected" });
+        toast.success(data.message || "Đã từ chối CV thành công!");
       } else {
         toast.error(data.message || "Không thể cập nhật trạng thái CV.");
       }
@@ -198,7 +229,7 @@ export default function CvDetailPage() {
   }
 
   const statusMeta = cvStatusList.find((item) => item.value === detail.status);
-  const canAccept = role === "company" && detail.status === "initial";
+  const canUpdate = role === "company" && (detail.status === "pending" || detail.status === "viewed");
 
   return (
     <div className="py-[60px]">
@@ -264,14 +295,24 @@ export default function CvDetailPage() {
         </div>
 
         {role === "company" && (
-          <button
-            type="button"
-            onClick={handleAccept}
-            disabled={!canAccept || isUpdating}
-            className={`px-4 py-2 rounded text-white text-[14px] ${canAccept ? "bg-[#16A34A] hover:bg-[#15803D]" : "bg-[#9CA3AF] cursor-not-allowed"}`}
-          >
-            {detail.status === "approved" ? "Đã chấp nhận CV" : isUpdating ? "Đang xử lý..." : "Chấp nhận CV"}
-          </button>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={handleAccept}
+              disabled={!canUpdate || isUpdating}
+              className={`px-4 py-2 rounded text-white text-[14px] ${canUpdate ? "bg-[#16A34A] hover:bg-[#15803D]" : "bg-[#9CA3AF] cursor-not-allowed"}`}
+            >
+              {detail.status === "accepted" ? "Đã chấp nhận CV" : isUpdating ? "Đang xử lý..." : "Chấp nhận CV"}
+            </button>
+            <button
+              type="button"
+              onClick={handleReject}
+              disabled={!canUpdate || isUpdating}
+              className={`px-4 py-2 rounded text-white text-[14px] ${canUpdate ? "bg-[#DC2626] hover:bg-[#B91C1C]" : "bg-[#9CA3AF] cursor-not-allowed"}`}
+            >
+              {detail.status === "rejected" ? "Đã từ chối CV" : isUpdating ? "Đang xử lý..." : "Từ chối CV"}
+            </button>
+          </div>
         )}
       </div>
     </div>

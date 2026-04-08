@@ -46,7 +46,7 @@ export const useAuth = () => {
 
   const shouldFetch = !pathname.startsWith("/login") && !pathname.startsWith("/register") && !pathname.startsWith("/forgotpassword");
   const { data, error, isLoading, mutate } = useSWR(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, fetcher, {
-    revalidateOnFocus: false, // tránh spam khi chuyển tab
+    revalidateOnFocus: false, 
   });
 
   const isLogin = data?.code === "success";

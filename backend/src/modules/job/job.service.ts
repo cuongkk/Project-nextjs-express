@@ -1,8 +1,33 @@
 import Job from "./job.model";
 import City from "../city/city.model";
 import AccountCompany from "../company/company.model";
+import Application from "../application/application.model";
+import CV from "../cv/cv.model";
 import { AccountRequest } from "../../interfaces/request.interface";
-import { PAGINATION } from "../../configs/variable.config";
+import { JOB_EXPIRE_DAYS, PAGINATION } from "../../configs/variable.config";
+
+export const all = async () => {
+  const [totalJobs, cities, title, techArrays, companyIds] = await Promise.all([
+    Job.countDocuments(),
+    Job.find().distinct("city"),
+    Job.find().distinct("title"),
+    Job.find().distinct("technologies"),
+    Job.find().distinct("companyId"),
+  ]);
+
+  const [listCity, companies] = await Promise.all([City.find({ _id: { $in: cities } }), AccountCompany.find({ _id: { $in: companyIds } }).select("_id companyName")]);
+
+  const techList = Array.from(new Set((techArrays as string[]).flat()));
+
+  return {
+    code: "success",
+    total: totalJobs,
+    listCity: listCity,
+    title: title,
+    techList: techList,
+    companies: companies,
+  };
+};
 
 export const list = async (companyId: string) => {
   const limitItems = PAGINATION.JOB_LIST_PAGE_SIZE ?? 10;
@@ -21,6 +46,8 @@ export const list = async (companyId: string) => {
     position: item.position,
     workingForm: item.workingForm,
     technologies: item.technologies,
+    status: item.status,
+    expiresAt: item.expiresAt,
     companyCity: city?.name,
     companyLogo: company?.logo,
   }));
@@ -41,6 +68,17 @@ export const detail = async (id: string) => {
     };
   }
 
+  const now = new Date();
+  const isExpiredByTime = !!record.expiresAt && record.expiresAt < now;
+  const isInactiveStatus = !!record.status && record.status !== "active";
+
+  if (isExpiredByTime || isInactiveStatus) {
+    return {
+      code: "error",
+      message: "Công việc đã hết hạn hoặc không còn tuyển dụng!",
+    };
+  }
+
   const jobDetail: any = {
     id: record.id,
     title: record.title,
@@ -55,7 +93,6 @@ export const detail = async (id: string) => {
     description: record.description,
     companyId: record.companyId,
     companyLogo: "",
-    companyModel: "",
     companyEmployees: "",
     companyWorkingTime: "",
     companyWorkOvertime: "",
@@ -86,6 +123,13 @@ export const create = async (req: AccountRequest) => {
   req.body.salaryMax = req.body.salaryMax ? parseInt(req.body.salaryMax) : 0;
   req.body.technologies = req.body.technologies || [];
   req.body.images = [];
+
+  // Thiết lập thời hạn job nếu chưa có
+  if (!req.body.expiresAt) {
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + JOB_EXPIRE_DAYS * 24 * 60 * 60 * 1000);
+    req.body.expiresAt = expiresAt;
+  }
 
   if (req.files) {
     for (const file of req.files as any[]) {
@@ -157,6 +201,23 @@ export const remove = async (req: AccountRequest) => {
       message: "Id không hợp lệ!",
     };
   }
+
+  // Chỉ được xóa khi job đã hết hạn
+  const now = new Date();
+  const isExpiredByTime = !!jobDetail.expiresAt && jobDetail.expiresAt < now;
+
+  if (!isExpiredByTime) {
+    return {
+      code: "error",
+      message: "Chỉ có thể xóa công việc sau khi đã hết hạn!",
+    };
+  }
+
+  // Xóa tất cả đơn ứng tuyển liên quan đến job này
+  await Application.deleteMany({ jobId: id });
+
+  // Xóa tất cả CV liên quan đến job này (CV tạo ra khi ứng tuyển)
+  await CV.deleteMany({ jobId: id });
 
   await Job.deleteOne({
     _id: id,

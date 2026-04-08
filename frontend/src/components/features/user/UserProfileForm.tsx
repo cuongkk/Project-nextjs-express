@@ -9,7 +9,7 @@ import FilePondPluginFileValidateType from "filepond-plugin-file-validate-type";
 import FilePondPluginImagePreview from "filepond-plugin-image-preview";
 import "filepond/dist/filepond.min.css";
 import "filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css";
-import { setReloadToast } from "@/utils/toast.helper";
+import { setReloadToast } from "@/utils/toast";
 
 type AvatarFile = {
   source?: string;

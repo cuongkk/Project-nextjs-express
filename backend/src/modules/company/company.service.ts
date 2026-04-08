@@ -3,6 +3,8 @@ import AccountCompany from "./company.model";
 import { AccountRequest } from "../../interfaces/request.interface";
 import Job from "../job/job.model";
 import City from "../city/city.model";
+import Application from "../application/application.model";
+import CV from "../cv/cv.model";
 import { PAGINATION } from "../../configs/variable.config";
 
 export const profilePatch = async (req: AccountRequest) => {
@@ -168,6 +170,20 @@ export const deleteJobDel = async (req: AccountRequest) => {
     };
   }
 
+  const now = new Date();
+  const isExpiredByTime = !!jobDetail.expiresAt && jobDetail.expiresAt < now;
+
+  if (!isExpiredByTime) {
+    return {
+      code: "error",
+      message: "Chỉ có thể xóa công việc sau khi đã hết hạn!",
+    };
+  }
+
+  await Application.deleteMany({ jobId: id });
+
+  await CV.deleteMany({ jobId: id });
+
   await Job.deleteOne({
     _id: id,
     companyId: req.account.id,
@@ -218,8 +234,11 @@ export const list = async (req: Request) => {
     });
     dataItemFinal.cityName = `${city?.name}`;
 
+    const now = new Date();
     const totalJob = await Job.countDocuments({
       companyId: item.id,
+      status: "active",
+      $or: [{ expiresAt: { $exists: false } }, { expiresAt: { $gte: now } }],
     });
     dataItemFinal.totalJob = totalJob;
 
@@ -260,6 +279,8 @@ export const detail = async (req: Request) => {
 
   const jobs = await Job.find({
     companyId: id,
+    status: "active",
+    $or: [{ expiresAt: { $exists: false } }, { expiresAt: { $gte: new Date() } }],
   }).sort({
     createdAt: "desc",
   });

@@ -1,5 +1,5 @@
 import { CompanyItem } from "@/components/features/company/CompanyItem";
-import { CompnayList } from "./CompanyList";
+import { CompnayList } from "../../../components/features/company/CompanyList";
 
 export default function Page() {
   return (
