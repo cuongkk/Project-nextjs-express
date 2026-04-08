@@ -4,7 +4,7 @@ import { CompanyItem } from "@/components/features/company/CompanyItem";
 import { Pagination } from "@/components/ui/Pagination";
 import { useEffect, useState } from "react";
 
-export const CompnayList = () => {
+export const CompanyList = () => {
   const [companyList, setCompanyList] = useState<any[]>([]);
   const [page, setPage] = useState(1);
   const [totalPage, setTotalPage] = useState(1);
