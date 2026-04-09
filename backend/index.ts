@@ -14,11 +14,7 @@ connectDB();
 const app = express();
 const port = 5000;
 
-const allowedOrigins = [
-  "http://localhost:3000", // dev
-  "http://localhost", // nginx
-  "https://yourdomain.com", // production
-];
+const allowedOrigins = ["http://localhost:3000", "http://localhost", "https://it-job-five.vercel.app"];
 
 app.use(
   cors({
