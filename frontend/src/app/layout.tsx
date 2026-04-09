@@ -6,8 +6,11 @@ import { Footer } from "../components/layout/Footer";
 import ToastProvider from "../components/ui/ToastProvider";
 
 export const metadata: Metadata = {
-  title: "Trang chủ",
-  description: "Trang chủ của website tuyển dụng IT",
+  title: {
+    default: "IT Job Platform",
+    template: "%s | IT Job Platform",
+  },
+  description: "Nền tảng tuyển dụng việc làm IT dành cho ứng viên và doanh nghiệp.",
 };
 
 export default async function RootLayout({

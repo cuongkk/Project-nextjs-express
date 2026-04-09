@@ -4,8 +4,11 @@ import { useEffect, useState } from "react";
 import { Toaster, toast } from "sonner";
 import { Pagination } from "@/components/ui/Pagination";
 import { JobItem } from "@/components/features/job/JobItem";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function Page() {
+  usePageTitle("Quản lý công việc");
+
   const [jobList, setJobList] = useState<any[]>([]);
   const [page, setPage] = useState(1);
   const [totalPage, setTotalPage] = useState(1);

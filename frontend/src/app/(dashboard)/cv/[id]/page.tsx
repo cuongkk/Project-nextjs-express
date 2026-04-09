@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { cvStatusList } from "@/configs/variable";
 import { toast } from "sonner";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 type Role = "user" | "company";
 
@@ -55,6 +56,8 @@ interface ApplicationApiResponse {
 
 /* eslint-disable @next/next/no-img-element */
 export default function CvDetailPage() {
+  usePageTitle("Chi tiết CV");
+
   const router = useRouter();
   const params = useParams();
   const { infoUser, infoCompany, isLogin, isAuthLoaded } = useAuth();

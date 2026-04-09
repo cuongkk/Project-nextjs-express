@@ -1,5 +1,10 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { JobEditForm } from "@/components/features/job/JobEditForm";
+
+export const metadata: Metadata = {
+  title: "Chỉnh sửa công việc",
+};
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

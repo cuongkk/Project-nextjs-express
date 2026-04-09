@@ -1,8 +1,11 @@
 "use client";
 
 import { FormRegister } from "./FormRegister";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function Page() {
+  usePageTitle("Đăng ký tài khoản");
+
   return (
     <div className="py-[60px]">
       <div className="contain">

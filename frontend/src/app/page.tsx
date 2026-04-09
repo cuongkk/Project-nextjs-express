@@ -7,8 +7,8 @@ import { SectionCompany } from "@/components/features/application/SectionCompany
 import ToastProvider from "../components/ui/ToastProvider";
 
 export const metadata: Metadata = {
-  title: "Trang chủ",
-  description: "Trang chủ của website tuyển dụng IT",
+  title: "Việc làm IT & Tuyển dụng",
+  description: "Khám phá việc làm IT mới nhất, tìm công ty phù hợp và ứng tuyển nhanh.",
 };
 
 export default function Home() {

@@ -7,6 +7,7 @@ import { CvList } from "../../../components/features/cv/CvList";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 type Role = "user" | "company"; // FIXED: Centralized role type
 
@@ -18,6 +19,8 @@ interface CompanyJob {
 
 /* eslint-disable @next/next/no-img-element */
 export default function Page() {
+  usePageTitle("Quản lý CV");
+
   const router = useRouter();
   const { infoUser, infoCompany, isLogin, isAuthLoaded } = useAuth();
 

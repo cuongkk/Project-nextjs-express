@@ -1,8 +1,11 @@
 "use client";
 
 import { LoginForm } from "@/app/(auth)/login/LoginForm";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function Page() {
+  usePageTitle("Đăng nhập");
+
   return (
     <div className="py-[60px]">
       <div className="contain">

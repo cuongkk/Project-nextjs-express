@@ -1,5 +1,10 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { JobCreateForm } from "../../../../components/features/job/JobCreateForm";
+
+export const metadata: Metadata = {
+  title: "Thêm mới công việc",
+};
 
 export default function Page() {
   return (

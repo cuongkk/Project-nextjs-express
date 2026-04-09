@@ -1,6 +1,11 @@
+import type { Metadata } from "next";
 import { ChangePassForm } from "./ChangePassForm";
 
 /* eslint-disable @next/next/no-img-element */
+export const metadata: Metadata = {
+  title: "Đổi mật khẩu",
+};
+
 export default function Page() {
   return (
     <>

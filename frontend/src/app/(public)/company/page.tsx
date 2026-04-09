@@ -1,5 +1,9 @@
-import { CompanyItem } from "@/components/features/company/CompanyItem";
+import type { Metadata } from "next";
 import { CompanyList } from "../../../components/features/company/CompanyList";
+
+export const metadata: Metadata = {
+  title: "Danh sách công ty",
+};
 
 export default function Page() {
   return (

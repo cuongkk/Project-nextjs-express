@@ -1,6 +1,11 @@
+import type { Metadata } from "next";
 import { JobItem } from "@/components/features/job/JobItem";
 import { FaLocationDot } from "react-icons/fa6";
 import { notFound } from "next/navigation";
+
+export const metadata: Metadata = {
+  title: "Chi tiết công ty",
+};
 
 /* eslint-disable @next/next/no-img-element */
 type CompanyPageParams = {

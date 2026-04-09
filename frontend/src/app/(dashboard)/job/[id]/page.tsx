@@ -10,8 +10,11 @@ import { FaArrowRight, FaBriefcase, FaLocationDot, FaUserTie } from "react-icons
 import { FormApply } from "./FormApply";
 import { useAuth } from "@/hooks/useAuth";
 import { Toaster, toast } from "sonner";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function Page() {
+  usePageTitle("Chi tiết việc làm");
+
   const params = useParams<{ id: string }>();
   const id = params.id as string;
 
@@ -39,6 +42,13 @@ export default function Page() {
 
     fetchJobDetail();
   }, [id]);
+
+  useEffect(() => {
+    if (jobDetail?.title) {
+      document.title = `${jobDetail.title} | IT Job`;
+    }
+  }, [jobDetail]);
+
   return (
     <>
       <Toaster richColors position="top-right" toastOptions={{ duration: 1000 }} />

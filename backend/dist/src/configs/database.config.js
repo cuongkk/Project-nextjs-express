@@ -5,13 +5,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.connectDB = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
+const logger_1 = require("../utils/logger");
 const connectDB = async () => {
     try {
         await mongoose_1.default.connect(`${process.env.DATABASE}`);
-        console.log("Kết nối DB thành công!");
+        logger_1.logger.info("Kết nối DB thành công!");
     }
     catch (error) {
-        console.log("Kết nối DB thất bại!", error);
+        logger_1.logger.error("Kết nối DB thất bại!", error);
+        process.exit(1);
     }
 };
 exports.connectDB = connectDB;

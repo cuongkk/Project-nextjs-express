@@ -1,8 +1,11 @@
 "use client";
 
 import { ForgotPasswordForm } from "@/app/(auth)/forgotpassword/ForgotPasswordForm";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function Page() {
+  usePageTitle("Quên mật khẩu");
+
   return (
     <div className="py-[60px]">
       <div className="contain">

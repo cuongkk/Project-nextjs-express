@@ -1,10 +1,12 @@
 import mongoose from "mongoose";
+import { logger } from "../utils/logger";
 
 export const connectDB = async () => {
   try {
     await mongoose.connect(`${process.env.DATABASE}`);
-    console.log("Kết nối DB thành công!");
+    logger.info("Kết nối DB thành công!");
   } catch (error) {
-    console.log("Kết nối DB thất bại!", error);
+    logger.error("Kết nối DB thất bại!", error);
+    process.exit(1);
   }
 };

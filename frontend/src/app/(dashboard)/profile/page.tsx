@@ -5,8 +5,11 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { UserProfileForm } from "@/components/features/user/UserProfileForm";
 import { CompanyProfileForm } from "@/components/features/company/CompanyProfileForm";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function Page() {
+  usePageTitle("Hồ sơ tài khoản");
+
   const router = useRouter();
   const { infoUser, infoCompany, isLogin, isAuthLoaded } = useAuth();
 
