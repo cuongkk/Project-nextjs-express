@@ -6,6 +6,7 @@
 import { CvList } from "../../../components/features/cv/CvList";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
 
@@ -27,7 +28,7 @@ export default function Page() {
   const role: Role | null = infoCompany ? "company" : infoUser ? "user" : null; // FIXED: use Role type
 
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
-  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "viewed" | "accepted" | "rejected">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "applied" | "screening" | "interview" | "offer" | "hired" | "rejected">("all");
   const [jobFilter, setJobFilter] = useState<string>("all");
   const [companyJobs, setCompanyJobs] = useState<CompanyJob[]>([]);
   const [jobsError, setJobsError] = useState<string | null>(null); // ADDED: basic error state
@@ -36,7 +37,7 @@ export default function Page() {
     if (!isAuthLoaded) return;
     if (!isLogin || role !== "company") return;
 
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs?limit=1000`, {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs/my?limit=1000`, {
       method: "GET",
       credentials: "include",
     })
@@ -94,10 +95,12 @@ export default function Page() {
               <span className="font-[700]">Trạng thái:</span>
               <select className="border border-[#DEDEDE] rounded-[4px] px-2 py-1 text-[14px]" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)}>
                 <option value="all">Tất cả</option>
-                <option value="pending">Chờ xử lý</option>
-                <option value="viewed">Đã xem</option>
-                <option value="accepted">Đã chấp nhận</option>
-                <option value="rejected">Từ chối</option>
+                <option value="applied">Applied</option>
+                <option value="screening">Screening</option>
+                <option value="interview">Interview</option>
+                <option value="offer">Offer</option>
+                <option value="hired">Hired</option>
+                <option value="rejected">Rejected</option>
               </select>
             </div>
             {role === "company" && (
@@ -115,6 +118,13 @@ export default function Page() {
             )}
           </div>
           {jobsError && role === "company" && <p className="text-sm text-red-600 mb-2">{jobsError}</p>}
+          {role === "company" && jobFilter !== "all" && (
+            <div className="mb-3">
+              <Link href={`/employer/applications/${jobFilter}`} className="inline-block bg-[#111827] text-white rounded-[4px] px-3 py-2 text-[14px]">
+                Mở Kanban Pipeline cho job này
+              </Link>
+            </div>
+          )}
           <CvList role={role} sortOrder={sortOrder} statusFilter={statusFilter} jobIdFilter={role === "company" ? jobFilter : undefined} />
         </div>
       </div>

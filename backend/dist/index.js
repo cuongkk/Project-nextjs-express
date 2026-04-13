@@ -8,17 +8,21 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const cors_1 = __importDefault(require("cors"));
 const helmet_1 = __importDefault(require("helmet"));
 const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
+const http_1 = require("http");
 const index_route_1 = __importDefault(require("./src/routes/index.route"));
 const database_config_1 = require("./src/configs/database.config");
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const error_middleware_1 = require("./src/middlewares/error.middleware");
 const logger_1 = require("./src/utils/logger");
+const socket_1 = require("./src/utils/socket");
 // Load biến môi trường từ file .env
 dotenv_1.default.config();
 // Kết nối đến cơ sở dữ liệu MongoDB
 const bootstrap = async () => {
     await (0, database_config_1.connectDB)();
-    app.listen(port, () => {
+    const httpServer = (0, http_1.createServer)(app);
+    (0, socket_1.initSocket)(httpServer, allowedOrigins);
+    httpServer.listen(port, () => {
         logger_1.logger.info(`Website đang chạy trên cổng ${port}`);
     });
 };

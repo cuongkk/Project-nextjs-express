@@ -7,6 +7,11 @@ const schema = new mongoose.Schema(
       type: String,
       enum: ["user", "company"],
     },
+    type: {
+      type: String,
+      enum: ["application_status", "new_message", "CV_ACCEPTED", "NEW_APPLICATION"],
+      default: null,
+    },
     title: String,
     message: String,
     data: Object,

@@ -41,7 +41,10 @@ const cloudinary_helper_1 = require("../../utils/cloudinary.helper");
 const router = (0, express_1.Router)();
 // JOBS
 router.get("/all", jobController.all);
-router.get("/", authMiddleware.verifyTokenCompany, jobController.list);
+router.get("/my", authMiddleware.verifyTokenCompany, jobController.list);
+// ADDED: Recommend jobs for logged-in candidate
+router.get("/recommend", authMiddleware.verifyTokenUser, jobController.recommend);
+router.get("/", jobController.publicList);
 router.get("/:id", jobController.detail);
 router.post("/", authMiddleware.verifyTokenCompany, cloudinary_helper_1.upload.array("images", 8), async (req, res) => {
     try {

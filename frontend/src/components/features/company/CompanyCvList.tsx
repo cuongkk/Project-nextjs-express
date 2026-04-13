@@ -120,7 +120,6 @@ export const CompanyCvList = ({ sortOrder, statusFilter }: CvListProps) => {
                     background: "linear-gradient(180deg, #F6F6F6 2.38%, #FFFFFF 70.43%)",
                   }}
                 >
-                  <img src="/assets/images/card-bg.png" alt="" className="absolute top-[0px] left-[0px] w-[100%] h-auto" />
                   <h3 className="mt-[20px] mx-[16px] font-[700] text-[18px] text-[#121212] text-center flex-1 whitespace-normal line-clamp-2">{item.jobTitle}</h3>
                   <div className="mt-[12px] text-center font-[400] text-[14px] text-black">
                     Ứng viên: <span className="font-[700]">{item.fullName}</span>

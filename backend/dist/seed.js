@@ -15,7 +15,17 @@ const application_model_1 = __importDefault(require("./src/modules/application/a
 const saved_job_model_1 = __importDefault(require("./src/modules/user/saved-job.model"));
 const notification_model_1 = __importDefault(require("./src/modules/notificaion/notification.model"));
 const city_model_1 = __importDefault(require("./src/modules/city/city.model"));
+const candidate_profile_model_1 = __importDefault(require("./src/modules/profile/candidate-profile.model"));
 const random = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const pickMany = (arr, min = 1, max = arr.length) => {
+    const shuffled = [...arr];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    const count = Math.floor(Math.random() * (max - min + 1)) + min;
+    return shuffled.slice(0, count);
+};
 const fullNames = [
     "Nguyễn Văn An",
     "Trần Thị Bình",
@@ -38,7 +48,7 @@ const fullNames = [
     "Bùi Thị Hạnh",
     "Trịnh Minh Quang",
 ];
-const company = [
+const companiesSeed = [
     { name: "Công ty TNHH Công nghệ Sao Việt", companyLogo: "https://res.cloudinary.com/dkamd3ghb/image/upload/v1774839179/OIP_ov3wmi.webp" },
     {
         name: "Công ty Cổ phần Giải pháp Phần mềm Đông Á",
@@ -113,6 +123,54 @@ quyết vấn đề, sẵn sàng đối mặt với thử thách và không ng�
 cùng công ty. Nếu bạn muốn làm việc trong một môi trường năng động, sáng tạo và có cơ
 hội phát triển bản thân, hãy gia nhập đội ngũ của chúng tôi!
 `;
+const jobRequirements = `
+- Có kiến thức nền tảng tốt về lập trình và cấu trúc dữ liệu.
+- Có kinh nghiệm làm việc với Git, API REST và cơ sở dữ liệu.
+- Có khả năng đọc hiểu tài liệu kỹ thuật tiếng Anh.
+- Chủ động, trách nhiệm và có tinh thần học hỏi liên tục.
+`;
+const jobBenefits = `
+- Lương thưởng cạnh tranh theo năng lực.
+- Review lương định kỳ và thưởng hiệu quả công việc.
+- Môi trường làm việc linh hoạt, hỗ trợ hybrid/remote.
+- Bảo hiểm đầy đủ và các hoạt động nội bộ định kỳ.
+`;
+const profileEducation = [
+    "Đại học Bách Khoa Hà Nội - Công nghệ thông tin",
+    "Đại học Công nghệ - Đại học Quốc gia Hà Nội",
+    "Đại học FPT - Kỹ thuật phần mềm",
+    "Đại học Khoa học Tự nhiên - Khoa học máy tính",
+    "Đại học CNTT TP.HCM - Hệ thống thông tin",
+];
+const locations = ["Hà Nội", "Hồ Chí Minh", "Đà Nẵng"];
+const applicationStatuses = ["applied", "screening", "interview", "offer", "hired", "rejected"];
+const buildApplicationHistory = (finalStatus) => {
+    const now = Date.now();
+    if (finalStatus === "rejected") {
+        const rejectedAt = random(["applied", "screening", "interview", "offer"]);
+        const track = ["applied"];
+        if (["screening", "interview", "offer"].includes(rejectedAt))
+            track.push("screening");
+        if (["interview", "offer"].includes(rejectedAt))
+            track.push("interview");
+        if (["offer"].includes(rejectedAt))
+            track.push("offer");
+        track.push("rejected");
+        return track.map((status, index) => ({
+            status,
+            updatedAt: new Date(now - (track.length - index) * 24 * 60 * 60 * 1000),
+            note: status === "rejected" ? "Không phù hợp yêu cầu hiện tại" : "",
+        }));
+    }
+    const flow = ["applied", "screening", "interview", "offer"];
+    const endIndex = flow.indexOf(finalStatus);
+    const steps = flow.slice(0, endIndex + 1);
+    return steps.map((status, index) => ({
+        status,
+        updatedAt: new Date(now - (steps.length - index) * 24 * 60 * 60 * 1000),
+        note: "",
+    }));
+};
 const run = async () => {
     try {
         await (0, database_config_1.connectDB)();
@@ -125,25 +183,46 @@ const run = async () => {
             saved_job_model_1.default.deleteMany({}),
             notification_model_1.default.deleteMany({}),
             city_model_1.default.deleteMany({}),
+            candidate_profile_model_1.default.deleteMany({}),
         ]);
         const hashedPassword = await bcryptjs_1.default.hash("Cc123456@", 10);
         // ===== City =====
         const cities = await Promise.all(["Hà Nội", "Hồ Chí Minh", "Đà Nẵng"].map((c) => city_model_1.default.create({ name: c })));
         // ===== Users =====
-        const users = await Promise.all(Array.from({ length: 20 }).map((_, i) => user_model_1.default.create({
-            fullName: random(fullNames),
-            email: `user${i}@gmail.com`,
-            password: hashedPassword,
-            avatar: "https://placehold.co/100x100",
+        const users = await Promise.all(Array.from({ length: 20 }).map((_, i) => {
+            const fullName = random(fullNames);
+            const name = fullName.trim().split(" ").slice(-1)[0];
+            return user_model_1.default.create({
+                name,
+                fullName,
+                email: `user${i}@gmail.com`,
+                password: hashedPassword,
+                role: "candidate",
+                avatar: "https://placehold.co/100x100",
+            });
+        }));
+        await Promise.all(users.map((user) => candidate_profile_model_1.default.create({
+            userId: user._id.toString(),
+            skills: pickMany(tech, 3, 6),
+            experienceYears: Math.floor(Math.random() * 6),
+            education: random(profileEducation),
+            resumeUrl: "https://example.com/cv.pdf",
+            bio: "Ứng viên có tinh thần học hỏi, trách nhiệm và khả năng làm việc nhóm tốt.",
+            expectedSalaryMin: Math.floor(Math.random() * 8) + 8,
+            expectedSalaryMax: Math.floor(Math.random() * 8) + 16,
+            location: random(locations),
+            isPublic: Math.random() > 0.15,
         })));
         // ===== Companies + Jobs =====
+        const allJobs = [];
         let count = 1;
-        for (const { name, companyLogo } of company) {
+        for (const { name, companyLogo } of companiesSeed) {
             const company = await company_model_1.default.create({
                 companyName: name,
                 email: `company${count}@hr.com`,
                 password: hashedPassword,
                 city: random(cities)._id.toString(),
+                role: "employer",
                 address: "Hà Nội",
                 companyEmployees: random(["10-50", "50-100", "100-200"]),
                 workingTime: "8:30 - 17:30",
@@ -155,29 +234,35 @@ const run = async () => {
             // mỗi company: 1–3 job
             const jobCount = Math.floor(Math.random() * 3) + 1;
             for (let i = 0; i < jobCount; i++) {
-                const salaryMin = Math.floor(Math.random() * 10) + 5; // 5k - 15k
-                function getRandomTechs(arr) {
-                    const shuffled = [...arr];
-                    for (let i = shuffled.length - 1; i > 0; i--) {
-                        const j = Math.floor(Math.random() * (i + 1));
-                        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-                    }
-                    const count = Math.floor(Math.random() * 3) + 2; // 2 → 4
-                    return shuffled.slice(0, count);
-                }
-                const jobTechs = getRandomTechs(tech);
+                const salaryMin = Math.floor(Math.random() * 10) + 6;
+                const jobTechs = pickMany(tech, 2, 5);
+                const level = random(["intern", "fresher", "junior", "middle", "senior", "manager"]);
+                const type = random(["remote", "onsite", "hybrid"]);
+                const expiresInDays = Math.floor(Math.random() * 45) + 15;
+                const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
                 const job = await job_model_1.default.create({
                     companyId: company._id.toString(),
+                    createdBy: company._id.toString(),
                     title: random(jobTitles),
+                    companyName: company.companyName,
+                    location: random(locations),
+                    type,
+                    level,
                     salaryMin: salaryMin,
                     salaryMax: salaryMin + 5,
-                    position: random(["junior", "fresher", "middle", "senior", "manager"]),
-                    workingForm: random(["full-time", "remote"]),
+                    position: level,
+                    workingForm: type,
+                    techStack: jobTechs,
                     technologies: jobTechs,
+                    requirements: jobRequirements,
+                    benefits: jobBenefits,
                     city: random(cities)._id.toString(),
                     description: jobDescription,
                     images: [],
+                    status: "active",
+                    expiresAt,
                 });
+                allJobs.push(job);
                 // mỗi job ~5 ứng viên
                 const appliedUsers = new Set();
                 for (let j = 0; j < 5; j++) {
@@ -196,12 +281,24 @@ const run = async () => {
                     });
                     const application = await application_model_1.default.create({
                         userId: user._id.toString(),
+                        candidateId: user._id.toString(),
                         companyId: company._id.toString(),
                         jobId: job._id.toString(),
                         cvId: cv._id.toString(),
-                        status: random(["pending", "viewed", "rejected", "accepted"]),
-                        viewedByCompany: Math.random() > 0.5,
+                        resumeUrl: cv.fileCV,
+                        status: random(applicationStatuses),
+                        viewedByCompany: true,
+                        interviewDate: Math.random() > 0.6 ? new Date(Date.now() + Math.floor(Math.random() * 14 + 1) * 24 * 60 * 60 * 1000) : undefined,
+                        note: "Ứng tuyển từ nguồn seed",
                     });
+                    const history = buildApplicationHistory(application.status);
+                    application.set("history", history);
+                    application.viewedByCompany = application.status !== "applied";
+                    if (application.status === "hired") {
+                        job.status = "closed";
+                        await job.save();
+                    }
+                    await application.save();
                     await notification_model_1.default.create({
                         receiverId: user._id.toString(),
                         receiverType: "user",
@@ -213,10 +310,33 @@ const run = async () => {
                         },
                         read: false,
                     });
+                    await notification_model_1.default.create({
+                        receiverId: company._id.toString(),
+                        receiverType: "company",
+                        title: "Đơn ứng tuyển mới",
+                        message: `Có ứng viên mới ứng tuyển vào vị trí ${job.title}`,
+                        data: {
+                            applicationId: application._id.toString(),
+                            jobId: job._id.toString(),
+                            candidateId: user._id.toString(),
+                        },
+                        read: Math.random() > 0.7,
+                    });
                 }
             }
         }
-        console.log("🔥 Seed realistic thành công!");
+        // ===== Saved Jobs =====
+        for (const user of users) {
+            const favoriteJobs = pickMany(allJobs, 1, Math.min(5, allJobs.length));
+            for (const job of favoriteJobs) {
+                await saved_job_model_1.default.create({
+                    userId: user._id.toString(),
+                    jobId: job._id.toString(),
+                    companyId: job.companyId,
+                });
+            }
+        }
+        console.log("🔥 Seed dữ liệu hoàn tất (users, profiles, companies, jobs, cvs, applications, notifications, saved-jobs)");
     }
     catch (error) {
         console.error("❌ Seed lỗi", error);

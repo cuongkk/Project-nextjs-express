@@ -13,7 +13,7 @@ export default function SearchPageClient() {
 
   const [techList, setTechList] = useState<string[]>([]);
   const [cityList, setCityList] = useState<{ _id: string; name: string }[]>([]);
-  const [positionList, setPositionList] = useState<string[]>([]);
+  const [levelList, setLevelList] = useState<string[]>([]);
   const [jobs, setJobs] = useState<JobSearchItem[]>([]);
   const [totalPage, setTotalPage] = useState<number>(1);
   const [selectedTechnologies, setSelectedTechnologies] = useState<string[]>([]);
@@ -33,7 +33,9 @@ export default function SearchPageClient() {
       city: searchParams.get("city") || undefined,
       company: company || undefined,
       position: searchParams.get("position") || undefined,
-      workingForm: searchParams.get("workingForm") || undefined,
+      level: searchParams.get("level") || searchParams.get("position") || undefined,
+      workingForm: searchParams.get("workingForm") || searchParams.get("type") || undefined,
+      type: searchParams.get("type") || searchParams.get("workingForm") || undefined,
       salaryMin: salaryMin ? Number(salaryMin) : undefined,
       salaryMax: salaryMax ? Number(salaryMax) : undefined,
       technologies: technologies.length ? technologies : undefined,
@@ -103,8 +105,14 @@ export default function SearchPageClient() {
 
     if (keyword) params.set("keyword", keyword);
     if (city) params.set("city", city);
-    if (position) params.set("position", position);
-    if (workingForm) params.set("workingForm", workingForm);
+    if (position) {
+      params.set("position", position);
+      params.set("level", position);
+    }
+    if (workingForm) {
+      params.set("workingForm", workingForm);
+      params.set("type", workingForm);
+    }
     if (salaryMin) params.set("salaryMin", salaryMin);
     if (salaryMax) params.set("salaryMax", salaryMax);
     if (selectedTechnologies.length) {
@@ -119,10 +127,13 @@ export default function SearchPageClient() {
       keyword: keyword || undefined,
       city: city || undefined,
       position: position || undefined,
+      level: position || undefined,
       workingForm: workingForm || undefined,
+      type: workingForm || undefined,
       salaryMin: salaryMin ? Number(salaryMin) : undefined,
       salaryMax: salaryMax ? Number(salaryMax) : undefined,
       technologies: selectedTechnologies.length ? selectedTechnologies : undefined,
+      techStack: selectedTechnologies.length ? selectedTechnologies : undefined,
       page: 1,
     });
   };
@@ -159,11 +170,11 @@ export default function SearchPageClient() {
       .then((data) => {
         if (data.code === "success") {
           setCityList(data.listCity || []);
-          setPositionList(data.positions || []);
+          setLevelList(data.levels || data.positions || []);
           setTechList(data.techList || []);
         } else {
           setCityList([]);
-          setPositionList([]);
+          setLevelList([]);
           setTechList([]);
         }
       });
@@ -197,12 +208,12 @@ export default function SearchPageClient() {
               }))}
             />
             <CustomSelect
-              defaultName="Chọn vị trí"
+              defaultName="Chọn cấp độ"
               name="position"
-              defaultValue={searchParams.get("position") || ""}
-              options={positionList.map((position) => ({
-                label: position.charAt(0).toUpperCase() + position.slice(1),
-                value: position,
+              defaultValue={searchParams.get("level") || searchParams.get("position") || ""}
+              options={levelList.map((level) => ({
+                label: level.charAt(0).toUpperCase() + level.slice(1),
+                value: level,
               }))}
             />
             <div>
@@ -212,7 +223,7 @@ export default function SearchPageClient() {
                 className="md:w-[160px] w-[100%] h-[40px] rounded-[4px] px-[20px] font-[500] text-[14px] text-[#121212] bg-white border border-[#DEDEDE] flex items-center justify-between"
               >
                 <span>{techLabel}</span>
-                <span>{showTechFilters}</span>
+                <span>{showTechFilters ? "-" : "+"}</span>
               </button>
               {showTechFilters && techList.length > 0 && (
                 <div className="mt-[10px]">
@@ -226,6 +237,16 @@ export default function SearchPageClient() {
               defaultValue={searchParams.get("salaryMin") || ""}
               className="md:w-[200px] w-[48%] h-[40px] rounded-[4px] px-[20px] font-[500] text-[16px] text-[#121212] bg-white border border-[#DEDEDE]"
               placeholder="Lương tối thiểu"
+            />
+            <CustomSelect
+              defaultName="Hình thức"
+              name="workingForm"
+              defaultValue={searchParams.get("type") || searchParams.get("workingForm") || ""}
+              options={[
+                { label: "Remote", value: "remote" },
+                { label: "Onsite", value: "onsite" },
+                { label: "Hybrid", value: "hybrid" },
+              ]}
             />
             <button type="submit" className="md:w-[200px] h-[40px] bg-primary rounded-[4px] text-white font-[500] text-[16px] flex items-center justify-center">
               {loading ? "Đang tìm kiếm..." : "Tìm kiếm"}

@@ -14,6 +14,8 @@ const cv_route_1 = __importDefault(require("../modules/cv/cv.route"));
 const application_route_1 = __importDefault(require("../modules/application/application.route"));
 const search_route_1 = __importDefault(require("../modules/search/search.route"));
 const notification_route_1 = __importDefault(require("../modules/notificaion/notification.route")); // ADDED
+const profile_route_1 = __importDefault(require("../modules/profile/profile.route"));
+const chat_route_1 = __importDefault(require("../modules/chat/chat.route"));
 const router = (0, express_1.Router)();
 router.use("/users", user_route_1.default);
 router.use("/auth", auth_route_1.default);
@@ -25,4 +27,6 @@ router.use("/cvs", cv_route_1.default);
 router.use("/applications", application_route_1.default);
 router.use("/search", search_route_1.default);
 router.use("/notifications", notification_route_1.default); // ADDED
+router.use("/profile", profile_route_1.default);
+router.use("/", chat_route_1.default);
 exports.default = router;

@@ -42,23 +42,33 @@ export const workingFormList = [
 
 export const cvStatusList = [
   {
-    value: "pending",
-    label: "Chờ xử lý",
+    value: "applied",
+    label: "Applied",
     color: "#121212",
   },
   {
-    value: "viewed",
-    label: "Đã xem",
+    value: "screening",
+    label: "Screening",
     color: "#0088FF",
   },
   {
-    value: "accepted",
-    label: "Đã chấp nhận",
+    value: "interview",
+    label: "Interview",
+    color: "#7C3AED",
+  },
+  {
+    value: "offer",
+    label: "Offer",
+    color: "#0EA5E9",
+  },
+  {
+    value: "hired",
+    label: "Hired",
     color: "#9FDB7C",
   },
   {
     value: "rejected",
-    label: "Từ chối",
+    label: "Rejected",
     color: "#FF5100",
   },
 ];

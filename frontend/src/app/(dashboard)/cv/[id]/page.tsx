@@ -13,7 +13,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 
 type Role = "user" | "company";
 
-type CvStatus = "pending" | "viewed" | "accepted" | "rejected";
+type CvStatus = "applied" | "screening" | "interview" | "offer" | "hired" | "rejected";
 
 interface ApplicationDetail {
   id: string;
@@ -151,56 +151,36 @@ export default function CvDetailPage() {
     };
   }, [isAuthLoaded, isLogin, role, params, router]);
 
-  const handleAccept = async () => {
+  const handleUpdateStatus = async (nextStatus: Exclude<CvStatus, "applied">) => {
     if (!detail || role !== "company") return;
-    if (detail.status === "accepted" || detail.status === "rejected") return;
+    if (detail.status === "hired" || detail.status === "rejected") return;
 
     setIsUpdating(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/applications/${detail.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ status: "accepted" }),
-      });
-
-      const data = (await res.json()) as { code: string; message?: string };
-
-      if (data.code === "success") {
-        setDetail({ ...detail, status: "accepted" });
-        toast.success(data.message || "Đã chấp nhận CV thành công!");
-      } else {
-        toast.error(data.message || "Không thể cập nhật trạng thái CV.");
+      const payload: Record<string, unknown> = { status: nextStatus };
+      if (nextStatus === "interview") {
+        const interviewDate = window.prompt("Nhập lịch phỏng vấn (VD: 2026-04-15T09:00:00)");
+        if (!interviewDate) {
+          setIsUpdating(false);
+          return;
+        }
+        payload.interviewDate = interviewDate;
       }
-    } catch {
-      toast.error("Có lỗi xảy ra. Vui lòng thử lại.");
-    } finally {
-      setIsUpdating(false);
-    }
-  };
 
-  const handleReject = async () => {
-    if (!detail || role !== "company") return;
-    if (detail.status === "accepted" || detail.status === "rejected") return;
-
-    setIsUpdating(true);
-    try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/applications/${detail.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({ status: "rejected" }),
+        body: JSON.stringify(payload),
       });
 
       const data = (await res.json()) as { code: string; message?: string };
 
       if (data.code === "success") {
-        setDetail({ ...detail, status: "rejected" });
-        toast.success(data.message || "Đã từ chối CV thành công!");
+        setDetail({ ...detail, status: nextStatus });
+        toast.success(data.message || "Đã cập nhật trạng thái CV thành công!");
       } else {
         toast.error(data.message || "Không thể cập nhật trạng thái CV.");
       }
@@ -232,7 +212,15 @@ export default function CvDetailPage() {
   }
 
   const statusMeta = cvStatusList.find((item) => item.value === detail.status);
-  const canUpdate = role === "company" && (detail.status === "pending" || detail.status === "viewed");
+  const canUpdate = role === "company" && detail.status !== "hired" && detail.status !== "rejected";
+  const nextMap: Record<CvStatus, CvStatus[]> = {
+    applied: ["screening", "rejected"],
+    screening: ["interview", "offer", "rejected"],
+    interview: ["offer", "rejected"],
+    offer: ["hired", "rejected"],
+    hired: [],
+    rejected: [],
+  };
 
   return (
     <div className="py-[60px]">
@@ -299,22 +287,17 @@ export default function CvDetailPage() {
 
         {role === "company" && (
           <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={handleAccept}
-              disabled={!canUpdate || isUpdating}
-              className={`px-4 py-2 rounded text-white text-[14px] ${canUpdate ? "bg-[#16A34A] hover:bg-[#15803D]" : "bg-[#9CA3AF] cursor-not-allowed"}`}
-            >
-              {detail.status === "accepted" ? "Đã chấp nhận CV" : isUpdating ? "Đang xử lý..." : "Chấp nhận CV"}
-            </button>
-            <button
-              type="button"
-              onClick={handleReject}
-              disabled={!canUpdate || isUpdating}
-              className={`px-4 py-2 rounded text-white text-[14px] ${canUpdate ? "bg-[#DC2626] hover:bg-[#B91C1C]" : "bg-[#9CA3AF] cursor-not-allowed"}`}
-            >
-              {detail.status === "rejected" ? "Đã từ chối CV" : isUpdating ? "Đang xử lý..." : "Từ chối CV"}
-            </button>
+            {nextMap[detail.status].map((status) => (
+              <button
+                key={status}
+                type="button"
+                onClick={() => handleUpdateStatus(status as Exclude<CvStatus, "applied">)}
+                disabled={!canUpdate || isUpdating}
+                className={`px-4 py-2 rounded text-white text-[14px] ${status === "rejected" ? "bg-[#DC2626] hover:bg-[#B91C1C]" : "bg-[#16A34A] hover:bg-[#15803D]"}`}
+              >
+                {isUpdating ? "Đang xử lý..." : `Chuyển sang ${status}`}
+              </button>
+            ))}
           </div>
         )}
       </div>

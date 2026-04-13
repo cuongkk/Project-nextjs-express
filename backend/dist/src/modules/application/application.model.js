@@ -6,14 +6,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importDefault(require("mongoose"));
 const schema = new mongoose_1.default.Schema({
     userId: String,
+    candidateId: String,
     companyId: String,
     jobId: String,
     cvId: String,
+    resumeUrl: String,
     status: {
         type: String,
-        enum: ["pending", "viewed", "rejected", "accepted"],
-        default: "pending",
+        enum: ["applied", "screening", "interview", "offer", "hired", "rejected", "pending", "viewed", "accepted"],
+        default: "applied",
     },
+    interviewDate: Date,
+    note: String,
     viewedByCompany: {
         type: Boolean,
         default: false,
@@ -22,6 +26,7 @@ const schema = new mongoose_1.default.Schema({
         {
             status: String,
             updatedAt: Date,
+            note: String,
         },
     ],
 }, {

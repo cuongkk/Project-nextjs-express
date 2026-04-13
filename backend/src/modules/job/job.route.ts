@@ -9,7 +9,12 @@ const router = Router();
 // JOBS
 router.get("/all", jobController.all);
 
-router.get("/", authMiddleware.verifyTokenCompany, jobController.list);
+router.get("/my", authMiddleware.verifyTokenCompany, jobController.list);
+
+// ADDED: Recommend jobs for logged-in candidate
+router.get("/recommend", authMiddleware.verifyTokenUser, jobController.recommend);
+
+router.get("/", jobController.publicList);
 
 router.get("/:id", jobController.detail);
 

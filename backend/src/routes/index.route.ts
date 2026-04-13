@@ -9,6 +9,8 @@ import cvRoutes from "../modules/cv/cv.route";
 import applicationRoutes from "../modules/application/application.route";
 import searchRoutes from "../modules/search/search.route";
 import notificationRoutes from "../modules/notificaion/notification.route"; // ADDED
+import profileRoutes from "../modules/profile/profile.route";
+import chatRoutes from "../modules/chat/chat.route";
 
 const router = Router();
 
@@ -31,5 +33,9 @@ router.use("/applications", applicationRoutes);
 router.use("/search", searchRoutes);
 
 router.use("/notifications", notificationRoutes); // ADDED
+
+router.use("/profile", profileRoutes);
+
+router.use("/", chatRoutes);
 
 export default router;

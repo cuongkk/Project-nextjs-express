@@ -1,151 +1,205 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
-import { useAuth } from "@/hooks/useAuth";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { FilePond, registerPlugin } from "react-filepond";
-import FilePondPluginFileValidateType from "filepond-plugin-file-validate-type";
-import FilePondPluginImagePreview from "filepond-plugin-image-preview";
-import "filepond/dist/filepond.min.css";
-import "filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css";
-import { setReloadToast } from "@/utils/toast";
 
-type AvatarFile = {
-  source?: string;
-  file?: File;
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import { toast } from "sonner";
+import { useUserProfile } from "@/hooks/useApiData";
+import { invalidateCache } from "@/hooks/useApiData";
+
+type ProfileState = {
+  name: string;
+  skills: string;
+  experienceYears: string;
+  education: string;
+  bio: string;
+  expectedSalaryMin: string;
+  expectedSalaryMax: string;
+  location: string;
+  isPublic: boolean;
+  resumeUrl: string;
 };
 
-registerPlugin(FilePondPluginFileValidateType, FilePondPluginImagePreview);
-
 export const UserProfileForm = () => {
-  const { infoUser, isLogin, isAuthLoaded } = useAuth();
-  const router = useRouter();
-  const [avatars, setAvatars] = useState<AvatarFile[]>([]);
-  const [logos, setLogos] = useState<any[]>([]);
+  const { profile, isLoading, mutate } = useUserProfile();
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    formState: { errors },
-  } = useForm();
+  const [uploading, setUploading] = useState(false);
+  const [state, setState] = useState<ProfileState>({
+    name: "",
+    skills: "",
+    experienceYears: "0",
+    education: "",
+    bio: "",
+    expectedSalaryMin: "0",
+    expectedSalaryMax: "0",
+    location: "",
+    isPublic: true,
+    resumeUrl: "",
+  });
 
+  // Update state when profile data loads
   useEffect(() => {
-    if (!isAuthLoaded) return;
-    if (!isLogin) {
-      router.replace("/login");
-    }
-  }, [isAuthLoaded, isLogin, router]);
+    if (profile) {
+      const user = profile.user || {};
+      const profileData = profile.profile || {};
 
-  useEffect(() => {
-    if (!infoUser) return;
-
-    setValue("fullName", infoUser.fullName);
-    setValue("email", infoUser.email);
-    setValue("phone", infoUser.phone);
-    setValue("birthday", infoUser.birthday ? new Date(infoUser.birthday).toISOString().split("T")[0] : "");
-    setValue("gender", infoUser.gender || "");
-    setValue("address", infoUser.address || "");
-    setValue("experienceYears", infoUser.experienceYears || "");
-    setValue("currentPosition", infoUser.currentPosition || "");
-    setValue("desiredPosition", infoUser.desiredPosition || "");
-    setValue("skills", infoUser.skills ? infoUser.skills.join(", ") : "");
-    setValue("education", infoUser.education ? infoUser.education.join(", ") : "");
-    setValue("socials", infoUser.socials ? JSON.stringify(infoUser.socials) : "");
-
-    if (infoUser.avatar) {
-      setAvatars([{ source: infoUser.avatar }]);
-    }
-  }, [infoUser, setValue]);
-
-  // submit
-  const onSubmit = (data: any) => {
-    const formData = new FormData();
-    formData.append("fullName", data.fullName);
-    formData.append("email", data.email);
-
-    if (data.phone) formData.append("phone", data.phone);
-    if (data.birthday) formData.append("birthday", data.birthday);
-    if (data.gender) formData.append("gender", data.gender);
-    if (data.address) formData.append("address", data.address);
-    if (data.experienceYears) formData.append("experienceYears", data.experienceYears);
-    if (data.currentPosition) formData.append("currentPosition", data.currentPosition);
-    if (data.desiredPosition) formData.append("desiredPosition", data.desiredPosition);
-    if (data.skills) formData.append("skills", data.skills);
-    if (data.education) formData.append("education", data.education);
-    if (data.socials) formData.append("socials", data.socials);
-
-    if (avatars[0]?.file) {
-      formData.append("avatar", avatars[0].file);
-    }
-
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/profile`, {
-      method: "PATCH",
-      body: formData,
-      credentials: "include",
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.code === "error") {
-          setReloadToast("error", data.message || "Cập nhật thất bại");
-          window.location.reload();
-        }
-
-        if (data.code === "success") {
-          setReloadToast("success", data.message || "Cập nhật thành công");
-          window.location.reload();
-        }
+      setState({
+        name: user.name || "",
+        skills: Array.isArray(profileData.skills) ? profileData.skills.join(", ") : "",
+        experienceYears: `${profileData.experienceYears ?? 0}`,
+        education: profileData.education || "",
+        bio: profileData.bio || "",
+        expectedSalaryMin: `${profileData.expectedSalaryMin ?? 0}`,
+        expectedSalaryMax: `${profileData.expectedSalaryMax ?? 0}`,
+        location: profileData.location || "",
+        isPublic: profileData.isPublic ?? true,
+        resumeUrl: profileData.resumeUrl || "",
       });
+    }
+  }, [profile]);
+
+  const updateField = (key: keyof ProfileState, value: string | boolean) => {
+    setState((prev) => ({ ...prev, [key]: value }));
   };
 
+  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    const payload = {
+      name: state.name,
+      skills: state.skills,
+      experienceYears: Number(state.experienceYears || 0),
+      education: state.education,
+      bio: state.bio,
+      expectedSalaryMin: Number(state.expectedSalaryMin || 0),
+      expectedSalaryMax: Number(state.expectedSalaryMax || 0),
+      location: state.location,
+      isPublic: state.isPublic,
+    };
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/profile/me`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (data.code === "success") {
+        toast.success(data.message || "Cập nhật hồ sơ thành công");
+        invalidateCache("profile");
+        mutate();
+      } else {
+        toast.error(data.message || "Cập nhật hồ sơ thất bại");
+      }
+    } catch {
+      toast.error("Cập nhật hồ sơ thất bại");
+    }
+  };
+
+  const onUploadResume = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("resume", file);
+
+    setUploading(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/profile/me/cv`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+      const data = await res.json();
+
+      if (data.code === "success") {
+        setState((prev) => ({ ...prev, resumeUrl: data.profile?.resumeUrl || prev.resumeUrl }));
+        toast.success(data.message || "Tải CV thành công");
+        invalidateCache("profile");
+        mutate();
+      } else {
+        toast.error(data.message || "Tải CV thất bại");
+      }
+    } catch {
+      toast.error("Tải CV thất bại");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  if (isLoading) {
+    return <p>Đang tải hồ sơ...</p>;
+  }
+
   return (
-    <>
-      {infoUser && (
-        <form onSubmit={handleSubmit(onSubmit) as any} className="grid sm:grid-cols-2 grid-cols-1 gap-x-[20px] gap-y-[15px]">
-          {/* Avatar */}
-          <div className="sm:col-span-2">
-            <label className="block mb-[5px]">Avatar</label>
-            <div className="w-[120px] h-[120px] overflow-hidden">
-              <FilePond name="logo" labelIdle="+" acceptedFileTypes={["image/*"]} files={logos} onupdatefiles={setLogos} />
-            </div>
-          </div>
+    <form onSubmit={onSubmit} className="grid sm:grid-cols-2 grid-cols-1 gap-x-[20px] gap-y-[15px]">
+      <div>
+        <label className="block mb-[5px]">Họ tên</label>
+        <input value={state.name} onChange={(e) => updateField("name", e.target.value)} className="w-full h-[46px] border px-[20px]" />
+      </div>
 
-          {/* Full name */}
-          <div>
-            <label className="block mb-[5px]">Họ tên *</label>
-            <input
-              {...register("fullName", {
-                required: "Vui lòng nhập họ tên!",
-                minLength: { value: 5, message: "Ít nhất 5 ký tự!" },
-                maxLength: { value: 50, message: "Tối đa 50 ký tự!" },
-              })}
-              className="w-full h-[46px] border px-[20px]"
-            />
-            {errors.fullName && <p className="text-red-500">{errors.fullName.message as string}</p>}
-          </div>
+      <div>
+        <label className="block mb-[5px]">Kinh nghiệm (năm)</label>
+        <input type="number" value={state.experienceYears} onChange={(e) => updateField("experienceYears", e.target.value)} className="w-full h-[46px] border px-[20px]" />
+      </div>
 
-          {/* Email */}
-          <div>
-            <label>Email *</label>
-            <input
-              {...register("email", {
-                required: "Vui lòng nhập email!",
-                pattern: {
-                  value: /^\S+@\S+$/i,
-                  message: "Email không hợp lệ!",
-                },
-              })}
-              className="w-full h-[46px] border px-[20px]"
-            />
-            {errors.email && <p className="text-red-500">{errors.email.message as string}</p>}
-          </div>
+      <div className="sm:col-span-2">
+        <label className="block mb-[5px]">Kỹ năng (cách nhau bởi dấu phẩy)</label>
+        <input value={state.skills} onChange={(e) => updateField("skills", e.target.value)} className="w-full h-[46px] border px-[20px]" />
+      </div>
 
-          <div className="sm:col-span-2 flex gap-x-[10px]">
-            <button className="bg-blue-500 text-white h-[48px] w-full">Cập nhật</button>
-          </div>
-        </form>
-      )}
-    </>
+      <div>
+        <label className="block mb-[5px]">Mức lương mong muốn tối thiểu</label>
+        <input type="number" value={state.expectedSalaryMin} onChange={(e) => updateField("expectedSalaryMin", e.target.value)} className="w-full h-[46px] border px-[20px]" />
+      </div>
+
+      <div>
+        <label className="block mb-[5px]">Mức lương mong muốn tối đa</label>
+        <input type="number" value={state.expectedSalaryMax} onChange={(e) => updateField("expectedSalaryMax", e.target.value)} className="w-full h-[46px] border px-[20px]" />
+      </div>
+
+      <div className="sm:col-span-2">
+        <label className="block mb-[5px]">Học vấn</label>
+        <input value={state.education} onChange={(e) => updateField("education", e.target.value)} className="w-full h-[46px] border px-[20px]" />
+      </div>
+
+      <div className="sm:col-span-2">
+        <label className="block mb-[5px]">Địa điểm</label>
+        <input value={state.location} onChange={(e) => updateField("location", e.target.value)} className="w-full h-[46px] border px-[20px]" />
+      </div>
+
+      <div className="sm:col-span-2">
+        <label className="block mb-[5px]">Giới thiệu</label>
+        <textarea value={state.bio} onChange={(e) => updateField("bio", e.target.value)} className="w-full min-h-[120px] border px-[20px] py-[10px]" />
+      </div>
+
+      <div className="sm:col-span-2 flex items-center gap-2">
+        <input id="isPublic" type="checkbox" checked={state.isPublic} onChange={(e) => updateField("isPublic", e.target.checked)} />
+        <label htmlFor="isPublic">Cho phép nhà tuyển dụng xem profile công khai</label>
+      </div>
+
+      <div className="sm:col-span-2">
+        <label className="block mb-[5px]">CV hiện tại</label>
+        {state.resumeUrl ? (
+          <a href={state.resumeUrl} target="_blank" rel="noreferrer" className="text-primary underline break-all">
+            {state.resumeUrl}
+          </a>
+        ) : (
+          <p className="text-[#6B7280]">Chưa có CV</p>
+        )}
+      </div>
+
+      <div className="sm:col-span-2">
+        <label className="block mb-[5px]">Tải CV mới</label>
+        <input type="file" accept=".pdf,.doc,.docx" onChange={onUploadResume} />
+        {uploading && <p className="text-sm text-[#6B7280] mt-1">Đang tải lên...</p>}
+      </div>
+
+      <div className="sm:col-span-2 flex gap-x-[10px]">
+        <button className="bg-blue-500 text-white h-[48px] w-full">Cập nhật hồ sơ</button>
+      </div>
+    </form>
   );
 };

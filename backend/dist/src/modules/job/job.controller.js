@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.remove = exports.update = exports.create = exports.detail = exports.list = exports.all = void 0;
+exports.recommend = exports.remove = exports.update = exports.create = exports.detail = exports.publicList = exports.list = exports.all = void 0;
 const jobService = __importStar(require("./job.service"));
 const all = async (req, res) => {
     const result = await jobService.all();
@@ -51,6 +51,11 @@ const list = async (req, res) => {
     res.json(result);
 };
 exports.list = list;
+const publicList = async (req, res) => {
+    const result = await jobService.publicList(req.query);
+    res.json(result);
+};
+exports.publicList = publicList;
 const detail = async (req, res) => {
     const id = req.params.id;
     const result = await jobService.detail(id);
@@ -87,4 +92,15 @@ const remove = async (req, res) => {
     }
 };
 exports.remove = remove;
+// ADDED: Recommend jobs for candidate (user role)
+const recommend = async (req, res) => {
+    try {
+        const result = await jobService.recommend(req);
+        res.json(result);
+    }
+    catch (error) {
+        res.json({ code: "error", message: "Lấy danh sách gợi ý thất bại!" });
+    }
+};
+exports.recommend = recommend;
 // Nộp CV đã được tách sang modules/cv/cv.controller

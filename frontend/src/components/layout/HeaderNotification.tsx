@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 interface NotificationItem {
   _id: string;
-  type: "CV_ACCEPTED" | "NEW_APPLICATION";
+  type?: "application_status" | "new_message" | "CV_ACCEPTED" | "NEW_APPLICATION" | string;
   title: string;
   message: string;
   createdAt: string;
@@ -96,8 +96,22 @@ export const HeaderNotification = () => {
     }
   };
 
+  const handleReadOne = async (id: string) => {
+    // optimistic update
+    setItems((prev) => prev.map((it) => (it._id === id ? { ...it, read: true } : it)));
+    setCount((prev) => Math.max(0, prev - 1));
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notifications/${id}/read`, {
+        method: "PATCH",
+        credentials: "include",
+      });
+    } catch {
+      // ignore (best-effort)
+    }
+  };
+
   return (
-    <div className="relative group mr-3">
+    <div className="ml-2 relative group mr-3">
       <button type="button" className="relative text-white text-[20px] flex items-center justify-center" onClick={handleReadAll} onMouseEnter={handleToggle} onMouseLeave={() => setOpen(false)}>
         <FaBell />
         {count > 0 && <span className="absolute -top-1 -right-1 bg-red-500 text-[10px] leading-none text-white rounded-full px-1.5 py-0.5">{count}</span>}
@@ -117,11 +131,16 @@ export const HeaderNotification = () => {
               <div className="px-3 py-3 text-[13px] text-gray-500">Không có thông báo.</div>
             ) : (
               items.map((item) => (
-                <div key={item._id} className={`px-3 py-2 text-[13px] border-b last:border-b-0 ${item.read ? "bg-white" : "bg-[#EEF2FF]"}`}>
+                <button
+                  type="button"
+                  key={item._id}
+                  onClick={() => handleReadOne(item._id)}
+                  className={`w-full text-left px-3 py-2 text-[13px] border-b last:border-b-0 ${item.read ? "bg-white" : "bg-[#EEF2FF]"}`}
+                >
                   <div className="font-[600] mb-0.5">{item.title}</div>
                   <div className="text-[12px] text-gray-700 mb-0.5">{item.message}</div>
                   <div className="text-[11px] text-gray-400">{formatDistanceToNow(new Date(item.createdAt), { addSuffix: true, locale: vi })}</div>
-                </div>
+                </button>
               ))
             )}
           </div>

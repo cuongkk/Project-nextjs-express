@@ -18,6 +18,11 @@ export const list = async (req: AccountRequest, res: Response) => {
   res.json(result);
 };
 
+export const publicList = async (req: Request, res: Response) => {
+  const result = await jobService.publicList(req.query);
+  res.json(result);
+};
+
 export const detail = async (req: Request, res: Response) => {
   const id = req.params.id as string;
   const result = await jobService.detail(id);
@@ -48,6 +53,16 @@ export const remove = async (req: AccountRequest, res: Response) => {
     res.json(result);
   } catch (error) {
     res.json({ code: "error", message: "Thất bại!" });
+  }
+};
+
+// ADDED: Recommend jobs for candidate (user role)
+export const recommend = async (req: AccountRequest, res: Response) => {
+  try {
+    const result = await jobService.recommend(req);
+    res.json(result);
+  } catch (error) {
+    res.json({ code: "error", message: "Lấy danh sách gợi ý thất bại!" });
   }
 };
 

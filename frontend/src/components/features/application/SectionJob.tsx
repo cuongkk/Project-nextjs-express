@@ -42,18 +42,20 @@ export const SectionJob = () => {
     <>
       <div className="py-[60px]">
         <div className="contain">
-          <div className="flex items-center justify-between mb-[20px]">
-            <div>
+          <div className="flex items-center justify-between mb-[20px] lg:flex-row flex-col-reverse gap-[12px]">
+            <div className="w-full flex flex-col gap-[4px] ">
               <h2 className="font-[700] sm:text-[24px] text-[20px] text-[#121212] mb-[4px]">Việc làm nổi bật</h2>
               <p className="text-[14px] text-[#6B6B6B]">Khám phá những việc làm hàng đầu trên ITJobs.</p>
             </div>
-            <button
-              type="button"
-              onClick={() => router.push(`/search${searchParams.toString() ? `?${searchParams.toString()}` : ""}`)}
-              className="border border-primary text-primary rounded-[4px] px-[16px] py-[8px] text-[14px] font-[500]"
-            >
-              Tìm kiếm nâng cao
-            </button>
+            <div className="w-full align-self-start flex justify-end">
+              <button
+                type="button"
+                onClick={() => router.push(`/search${searchParams.toString() ? `?${searchParams.toString()}` : ""}`)}
+                className=" flex text-end border border-primary text-primary rounded-[4px] px-[16px] py-[8px] text-[14px] font-[500]"
+              >
+                Tìm kiếm nâng cao
+              </button>
+            </div>
           </div>
           <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-[20px]">
             {jobList.map((item) => (

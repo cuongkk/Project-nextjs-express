@@ -2,7 +2,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { SectionSearch } from "@/components/features/application/SectionSearch";
-import { SectionJob } from "@/components/features/application/SectionJob";
+import { HomeJobSection } from "@/components/features/application/HomeJobSection";
 import { SectionCompany } from "@/components/features/application/SectionCompany";
 import ToastProvider from "../components/ui/ToastProvider";
 
@@ -15,7 +15,6 @@ export default function Home() {
   return (
     <>
       <ToastProvider />
-      {/* Section 1 */}
       <Suspense
         fallback={
           <div className="bg-[#000065] py-[60px]">
@@ -25,15 +24,10 @@ export default function Home() {
       >
         <SectionSearch />
       </Suspense>
-      {/* End Section 1 */}
-      {/* Section 2 */}
       <Suspense fallback={<div className="contain py-[40px]">Đang tải danh sách việc làm...</div>}>
-        <SectionJob />
+        <HomeJobSection />
+        <SectionCompany />
       </Suspense>
-      {/* End Section 2 */}
-      {/* Section 3: Featured companies */}
-      <SectionCompany />
-      {/* End Section 3 */}
     </>
   );
 }

@@ -4,6 +4,7 @@ import "./globals.css";
 import { Header } from "../components/layout/Header";
 import { Footer } from "../components/layout/Footer";
 import ToastProvider from "../components/ui/ToastProvider";
+import { ChatWidget } from "../components/features/chat/ChatWidget";
 
 export const metadata: Metadata = {
   title: {
@@ -24,6 +25,7 @@ export default async function RootLayout({
         <ToastProvider />
         <Header />
         <main className="flex-1">{children}</main>
+        <ChatWidget />
         <Footer />
       </body>
     </html>

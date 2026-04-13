@@ -11,13 +11,13 @@ export const search = async (query: any) => {
 
   const find: any = {};
 
-  if (query.language || query.technologies) {
-    const tech = query.language || query.technologies;
+  if (query.language || query.technologies || query.techStack) {
+    const tech = query.language || query.technologies || query.techStack;
 
     if (Array.isArray(tech)) {
-      find.technologies = { $in: tech };
+      find.$or = [{ technologies: { $in: tech } }, { techStack: { $in: tech } }];
     } else {
-      find.technologies = tech;
+      find.$or = [{ technologies: tech }, { techStack: tech }];
     }
   }
 
@@ -54,11 +54,12 @@ export const search = async (query: any) => {
   }
 
   if (query.position) {
-    find.position = query.position;
+    find.$and = [...(find.$and || []), { $or: [{ position: query.position }, { level: query.position }] }];
   }
 
-  if (query.workingForm) {
-    find.workingForm = query.workingForm;
+  if (query.workingForm || query.type) {
+    const type = query.workingForm || query.type;
+    find.$and = [...(find.$and || []), { $or: [{ workingForm: type }, { type }] }];
   }
 
   // Lọc theo khoảng lương nếu có
@@ -77,8 +78,8 @@ export const search = async (query: any) => {
 
   // Chỉ tìm các job còn hiệu lực (đang active và chưa hết hạn)
   const now = new Date();
-  find.status = "active";
-  find.$or = [{ expiresAt: { $exists: false } }, { expiresAt: { $gte: now } }];
+  find.status = { $in: ["active", "open"] };
+  find.$and = [...(find.$and || []), { $or: [{ expiresAt: { $exists: false } }, { expiresAt: { $gte: now } }] }];
 
   const limitItems = PAGINATION.SEARCH_JOB_PAGE_SIZE;
   let page = 1;
@@ -105,9 +106,9 @@ export const search = async (query: any) => {
       salaryMin: item.salaryMin,
       salaryMax: item.salaryMax,
       position: item.position,
-      workingForm: item.workingForm,
+      workingForm: item.workingForm || item.type,
       companyCity: "",
-      technologies: item.technologies,
+      technologies: (item.techStack as string[]) || (item.technologies as string[]) || [],
     };
 
     const companyInfo = await AccountCompany.findOne({

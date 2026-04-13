@@ -36,11 +36,13 @@ export const applyPost = async (req: Request, res: Response, next: NextFunction)
 
 export const companyChangeStatusPatch = async (req: Request, res: Response, next: NextFunction) => {
   const schema = Joi.object({
-    status: Joi.string().trim().valid("accepted", "rejected").required().messages({
+    status: Joi.string().trim().valid("applied", "screening", "interview", "offer", "hired", "rejected", "accepted", "viewed", "pending").required().messages({
       "string.empty": "Vui lòng chọn trạng thái!",
       "any.only": "Trạng thái không hợp lệ!",
     }),
     notes: Joi.string().allow("", null).optional(),
+    note: Joi.string().allow("", null).optional(),
+    interviewDate: Joi.date().optional(),
   }).unknown(true);
 
   const { error } = schema.validate(req.body);
@@ -50,6 +52,27 @@ export const companyChangeStatusPatch = async (req: Request, res: Response, next
     res.json({
       code: "error",
       message: errorMessage,
+    });
+    return;
+  }
+
+  next();
+};
+
+export const companySetInterviewDatePatch = async (req: Request, res: Response, next: NextFunction) => {
+  const schema = Joi.object({
+    interviewDate: Joi.date().required().messages({
+      "any.required": "Vui lòng chọn lịch phỏng vấn!",
+      "date.base": "Lịch phỏng vấn không hợp lệ!",
+    }),
+    note: Joi.string().allow("", null).optional(),
+  }).unknown(true);
+
+  const { error } = schema.validate(req.body);
+  if (error) {
+    res.json({
+      code: "error",
+      message: error.details[0].message,
     });
     return;
   }

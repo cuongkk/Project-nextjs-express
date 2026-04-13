@@ -103,7 +103,7 @@ export default function Page() {
               <div className="flex-1 z-0">
                 <div className="border border-[#DEDEDE] rounded-[8px] p-[20px]">
                   <div className="flex items-start gap-x-[12px]">
-                    <img src={jobDetail.companyLogo} alt={jobDetail.companyName} className="w-[100px] aspect-square rounded-[4px] object-cover" />
+                    <img src={jobDetail.companyLogo} alt={jobDetail.companyName} className="w-[100px] aspect-square rounded-[4px] object-contain" />
                     <div className="flex-1">
                       <div className="font-[700] text-[18px] text-[#121212] mb-[10px]">{jobDetail.companyName}</div>
                       <Link href={`/company/${jobDetail.companyId}`} className="flex gap-x-[8px] items-center font-[400] text-[16px] text-primary">

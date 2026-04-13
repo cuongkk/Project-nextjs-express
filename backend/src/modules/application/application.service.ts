@@ -6,7 +6,32 @@ import AccountCompany from "../company/company.model";
 import CV from "../cv/cv.model";
 import { PAGINATION } from "../../configs/variable.config";
 import Notification from "../notificaion/notification.model";
+import Conversation from "../chat/conversation.model";
 import { sendMail } from "../../utils/mail.helper"; // ADDED
+
+const PIPELINE_STATUSES = ["applied", "screening", "interview", "offer", "hired", "rejected"] as const;
+
+const normalizeStatus = (status?: string) => {
+  if (!status) return "applied";
+  if (status === "pending") return "applied";
+  if (status === "viewed") return "screening";
+  if (status === "accepted") return "hired";
+  return status;
+};
+
+const canTransition = (from: string, to: string) => {
+  const graph: Record<string, string[]> = {
+    applied: ["screening", "rejected"],
+    screening: ["interview", "offer", "rejected"],
+    interview: ["offer", "rejected"],
+    offer: ["hired", "rejected"],
+    hired: [],
+    rejected: [],
+  };
+
+  if (from === to) return false;
+  return (graph[from] || []).includes(to);
+};
 
 export const apply = async (req: AccountRequest & { file?: any }) => {
   const userId = req.account.id;
@@ -88,18 +113,21 @@ export const apply = async (req: AccountRequest & { file?: any }) => {
       }
 
       const now = new Date();
+      const resumeUrl = finalCvId ? `${(await CV.findById(finalCvId).session(session))?.fileCV || ""}` : "";
 
       const [createdApp] = await Application.create(
         [
           {
             userId,
+            candidateId: userId,
             companyId,
             jobId,
             cvId: finalCvId,
-            status: "pending",
+            resumeUrl,
+            status: "applied",
             history: [
               {
-                status: "pending",
+                status: "applied",
                 updatedAt: now,
               },
             ],
@@ -115,6 +143,7 @@ export const apply = async (req: AccountRequest & { file?: any }) => {
           {
             receiverId: companyId,
             receiverType: "company",
+            type: "NEW_APPLICATION",
             title: "Đơn ứng tuyển mới",
             message: `Bạn có đơn ứng tuyển mới cho công việc "${job.title}"`,
             data: {
@@ -126,6 +155,27 @@ export const apply = async (req: AccountRequest & { file?: any }) => {
         ],
         { session },
       );
+
+      // ADDED: Create BoxContact conversation (1 job context)
+      const participants = [userId, companyId].map((x) => `${x}`).sort();
+      const existingConv = await Conversation.findOne({
+        jobId,
+        participants: { $all: participants },
+        $expr: { $eq: [{ $size: "$participants" }, 2] },
+      }).session(session);
+      if (!existingConv) {
+        await Conversation.create(
+          [
+            {
+              jobId,
+              participants,
+              lastMessage: "",
+              lastMessageAt: null,
+            },
+          ],
+          { session },
+        );
+      }
     });
 
     return {
@@ -155,10 +205,17 @@ export const userList = async (req: AccountRequest) => {
   const find: any = { userId };
 
   const statusParam = (req.query.status as string) || "";
-  const allowedStatuses = ["pending", "viewed", "rejected", "accepted"]; // UPDATED
+  const allowedStatuses = [...PIPELINE_STATUSES, "pending", "viewed", "accepted"];
   if (allowedStatuses.includes(statusParam)) {
-    // FIXED: use new status values
-    find.status = statusParam;
+    if (statusParam === "applied") {
+      find.status = { $in: ["applied", "pending"] };
+    } else if (statusParam === "screening") {
+      find.status = { $in: ["screening", "viewed"] };
+    } else if (statusParam === "hired") {
+      find.status = { $in: ["hired", "accepted"] };
+    } else {
+      find.status = statusParam;
+    }
   }
 
   const sortParam = (req.query.sort as string) || "newest";
@@ -191,11 +248,12 @@ export const userList = async (req: AccountRequest) => {
 
     return {
       id: app.id,
-      status: app.status,
+      status: normalizeStatus(app.status),
       viewedByCompany: app.viewedByCompany,
       jobId: app.jobId,
       jobTitle: job?.title ?? "",
       companyName: company?.companyName ?? "",
+      companyId: job?.companyId ?? "",
       createdAt: app.createdAt,
     };
   });
@@ -224,7 +282,10 @@ export const userDetail = async (req: AccountRequest) => {
   return {
     code: "success",
     message: "Thành công!",
-    application: app,
+    application: {
+      ...app.toObject(),
+      status: normalizeStatus(app.status),
+    },
     job,
     company,
     cv,
@@ -236,10 +297,17 @@ export const companyList = async (req: AccountRequest) => {
   const find: any = { companyId };
 
   const statusParam = (req.query.status as string) || "";
-  const allowedStatuses = ["pending", "viewed", "rejected", "accepted"]; // UPDATED
+  const allowedStatuses = [...PIPELINE_STATUSES, "pending", "viewed", "accepted"];
   if (allowedStatuses.includes(statusParam)) {
-    // FIXED: use new status values
-    find.status = statusParam;
+    if (statusParam === "applied") {
+      find.status = { $in: ["applied", "pending"] };
+    } else if (statusParam === "screening") {
+      find.status = { $in: ["screening", "viewed"] };
+    } else if (statusParam === "hired") {
+      find.status = { $in: ["hired", "accepted"] };
+    } else {
+      find.status = statusParam;
+    }
   }
 
   const jobIdParam = (req.query.jobId as string) || "";
@@ -278,13 +346,14 @@ export const companyList = async (req: AccountRequest) => {
 
     return {
       id: app.id,
-      status: app.status,
+      status: normalizeStatus(app.status),
       viewedByCompany: app.viewedByCompany,
       jobId: app.jobId,
       jobTitle: job?.title ?? "",
       candidateEmail: cv?.email ?? "",
       candidateName: cv?.userName ?? "",
       candidatePhone: cv?.phone ?? "",
+      userId: app.userId ?? "",
       createdAt: app.createdAt,
     };
   });
@@ -311,10 +380,10 @@ export const companyDetail = async (req: AccountRequest) => {
 
   if (!app.viewedByCompany) {
     app.viewedByCompany = true;
-    if (app.status === "pending") {
-      app.status = "viewed" as any;
+    if (normalizeStatus(app.status) === "applied") {
+      app.status = "screening" as any;
       app.history = app.history || [];
-      app.history.push({ status: "viewed", updatedAt: new Date() });
+      app.history.push({ status: "screening", updatedAt: new Date() });
     }
     await app.save();
   }
@@ -322,7 +391,10 @@ export const companyDetail = async (req: AccountRequest) => {
   return {
     code: "success",
     message: "Thành công!",
-    application: app,
+    application: {
+      ...app.toObject(),
+      status: normalizeStatus(app.status),
+    },
     job,
     cv,
   };
@@ -331,19 +403,22 @@ export const companyDetail = async (req: AccountRequest) => {
 export const companyChangeStatus = async (req: AccountRequest) => {
   const companyId = req.account.id;
   const id = req.params.id;
-  const { status, notes } = req.body as { status: string; notes?: string };
+  const { status, notes, note, interviewDate } = req.body as { status: string; notes?: string; note?: string; interviewDate?: string };
 
   const app = await Application.findOne({ _id: id, companyId });
   if (!app) {
     return { code: "error", message: "Không tìm thấy đơn ứng tuyển!" };
   }
-  const allowedStatuses = ["accepted", "rejected"];
-  if (!allowedStatuses.includes(status)) {
+
+  const nextStatus = normalizeStatus(status);
+  const currentStatus = normalizeStatus(app.status);
+
+  if (!PIPELINE_STATUSES.includes(nextStatus as any)) {
     return { code: "error", message: "Trạng thái không hợp lệ!" };
   }
 
-  if (app.status === "accepted" && status === "accepted") {
-    return { code: "error", message: "Đơn ứng tuyển này đã được chấp nhận trước đó!" };
+  if (!canTransition(currentStatus, nextStatus)) {
+    return { code: "error", message: `Không thể chuyển trạng thái từ ${currentStatus} sang ${nextStatus}!` };
   }
 
   const job = await Job.findOne({ _id: app.jobId, companyId });
@@ -356,19 +431,30 @@ export const companyChangeStatus = async (req: AccountRequest) => {
     return { code: "error", message: "CV không hợp lệ cho đơn ứng tuyển này!" };
   }
 
-  if (status === "accepted") {
-    const existingAccepted = await Application.findOne({ jobId: app.jobId, status: "accepted" });
+  if (nextStatus === "hired") {
+    const existingAccepted = await Application.findOne({ jobId: app.jobId, status: { $in: ["hired", "accepted"] } });
     if (existingAccepted && existingAccepted._id.toString() !== app._id.toString()) {
       return { code: "error", message: "Công việc này đã có ứng viên được chấp nhận!" };
     }
   }
 
-  app.status = status as any;
+  if (nextStatus === "interview") {
+    if (!interviewDate) {
+      return { code: "error", message: "Vui lòng chọn lịch phỏng vấn!" };
+    }
+    app.interviewDate = new Date(interviewDate);
+  }
+
+  if (note || notes) {
+    app.note = `${note || notes}`;
+  }
+
+  app.status = nextStatus as any;
   app.history = app.history || [];
-  app.history.push({ status, updatedAt: new Date() });
+  app.history.push({ status: nextStatus, updatedAt: new Date(), note: `${note || notes || ""}` });
   await app.save();
 
-  if (status === "accepted") {
+  if (nextStatus === "hired") {
     try {
       job.status = "closed";
       await job.save();
@@ -376,8 +462,9 @@ export const companyChangeStatus = async (req: AccountRequest) => {
       await Notification.create({
         receiverId: app.userId || "",
         receiverType: "user",
+        type: "application_status",
         title: "Đơn ứng tuyển đã được chấp nhận",
-        message: `Đơn ứng tuyển của bạn cho công việc ${job.title} đã được chấp nhận.`,
+        message: `Đơn ứng tuyển của bạn cho công việc ${job.title} đã được tuyển dụng.`,
         data: {
           applicationId: app._id.toString(),
           jobId: app.jobId,
@@ -386,15 +473,16 @@ export const companyChangeStatus = async (req: AccountRequest) => {
       });
 
       if (cv.email) {
-        const emailContent = `<p>Đơn ứng tuyển của bạn đã được chấp nhận.</p>`;
-        await sendMail(cv.email, "Đơn ứng tuyển của bạn đã được chấp nhận", emailContent);
+        const emailContent = `<p>Đơn ứng tuyển của bạn đã chuyển sang trạng thái <b>Hired</b>.</p>`;
+        await sendMail(cv.email, "Đơn ứng tuyển của bạn đã trúng tuyển", emailContent);
       }
     } catch {}
-  } else if (status === "rejected") {
+  } else if (nextStatus === "rejected") {
     try {
       await Notification.create({
         receiverId: app.userId || "",
         receiverType: "user",
+        type: "application_status",
         title: "Đơn ứng tuyển đã bị từ chối",
         message: `Đơn ứng tuyển của bạn cho công việc ${job.title} đã bị từ chối.`,
         data: {
@@ -409,9 +497,34 @@ export const companyChangeStatus = async (req: AccountRequest) => {
         await sendMail(cv.email, "Đơn ứng tuyển của bạn đã bị từ chối", emailContent);
       }
     } catch {}
+  } else if (nextStatus === "interview" && cv.email) {
+    try {
+      await sendMail(cv.email, "Lịch phỏng vấn", `<p>Bạn đã được mời phỏng vấn cho công việc ${job.title}. Thời gian: <b>${new Date(app.interviewDate as Date).toLocaleString("vi-VN")}</b></p>`);
+    } catch {}
   }
 
   return { code: "success", message: "Cập nhật trạng thái đơn ứng tuyển thành công!" };
+};
+
+export const companySetInterviewDate = async (req: AccountRequest) => {
+  const companyId = req.account.id;
+  const id = req.params.id;
+  const { interviewDate, note } = req.body as { interviewDate?: string; note?: string };
+
+  if (!interviewDate) {
+    return { code: "error", message: "Vui lòng chọn lịch phỏng vấn!" };
+  }
+
+  req.body.status = "interview";
+  req.body.interviewDate = interviewDate;
+  if (note) req.body.note = note;
+
+  const app = await Application.findOne({ _id: id, companyId });
+  if (!app) {
+    return { code: "error", message: "Không tìm thấy đơn ứng tuyển!" };
+  }
+
+  return companyChangeStatus(req);
 };
 
 // User: xóa đơn ứng tuyển (chỉ khi đã bị từ chối)

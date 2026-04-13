@@ -1,10 +1,11 @@
 import Notification from "./notification.model";
 import { AccountRequest } from "../../interfaces/request.interface";
 
-export type NotificationType = "CV_ACCEPTED" | "NEW_APPLICATION";
+export type NotificationType = "application_status" | "new_message" | "CV_ACCEPTED" | "NEW_APPLICATION";
 
 interface CreateNotificationPayload {
-  userId: string;
+  receiverId: string;
+  receiverType: "user" | "company";
   type: NotificationType;
   title: string;
   message: string;
@@ -12,11 +13,12 @@ interface CreateNotificationPayload {
 }
 
 export const createNotification = async (payload: CreateNotificationPayload) => {
-  const { userId, type, title, message, data } = payload;
+  const { receiverId, receiverType, type, title, message, data } = payload;
 
   await Notification.create({
-    receiverId: userId,
-    receiverType: type,
+    receiverId,
+    receiverType,
+    type,
     title,
     message,
     data: data || {},
@@ -81,4 +83,22 @@ export const markAllAsRead = async (req: AccountRequest) => {
     code: "success",
     message: "Đã đánh dấu tất cả thông báo là đã đọc!",
   };
+};
+
+export const markAsRead = async (req: AccountRequest, id: string) => {
+  const userId = req.account.id;
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + 60 * 60 * 1000); // 1h
+
+  const updated = await Notification.findOneAndUpdate(
+    { _id: id, receiverId: userId },
+    { $set: { read: true, readAt: now, expiresAt } },
+    { new: true },
+  );
+
+  if (!updated) {
+    return { code: "error", message: "Không tìm thấy thông báo!" };
+  }
+
+  return { code: "success", message: "Đã đánh dấu đã đọc!" };
 };

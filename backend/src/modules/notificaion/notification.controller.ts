@@ -29,3 +29,13 @@ export const readAll = async (req: AccountRequest, res: Response) => {
     res.json({ code: "error", message: "Cập nhật thông báo thất bại!" });
   }
 };
+
+export const readOne = async (req: AccountRequest, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const result = await notificationService.markAsRead(req, id);
+    res.json(result);
+  } catch (error) {
+    res.json({ code: "error", message: "Cập nhật thông báo thất bại!" });
+  }
+};

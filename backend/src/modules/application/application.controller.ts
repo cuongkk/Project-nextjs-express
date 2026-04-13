@@ -64,6 +64,15 @@ export const companyChangeStatus = async (req: AccountRequest, res: Response) =>
   }
 };
 
+export const companySetInterviewDate = async (req: AccountRequest, res: Response) => {
+  try {
+    const result = await applicationService.companySetInterviewDate(req);
+    res.json(result);
+  } catch (error) {
+    res.json({ code: "error", message: "Thất bại!" });
+  }
+};
+
 export const removeByUser = async (req: AccountRequest, res: Response) => {
   try {
     const result = await applicationService.removeByUser(req);

@@ -8,5 +8,6 @@ const router = Router();
 router.get("/", authMiddleware.authenticate, notificationController.list); // GET /notifications
 router.get("/count", authMiddleware.authenticate, notificationController.count); // GET /notifications/count
 router.patch("/read-all", authMiddleware.authenticate, notificationController.readAll); // PATCH /notifications/read-all
+router.patch("/:id/read", authMiddleware.authenticate, notificationController.readOne); // PATCH /notifications/:id/read
 
 export default router;

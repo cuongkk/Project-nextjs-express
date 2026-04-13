@@ -3,11 +3,13 @@ import dotenv from "dotenv";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import { createServer } from "http";
 import routes from "./src/routes/index.route";
 import { connectDB } from "./src/configs/database.config";
 import cookieParser from "cookie-parser";
 import { errorHandler, notFoundHandler } from "./src/middlewares/error.middleware";
 import { logger } from "./src/utils/logger";
+import { initSocket } from "./src/utils/socket";
 
 // Load biến môi trường từ file .env
 dotenv.config();
@@ -16,7 +18,10 @@ dotenv.config();
 const bootstrap = async () => {
   await connectDB();
 
-  app.listen(port, () => {
+  const httpServer = createServer(app);
+  initSocket(httpServer, allowedOrigins);
+
+  httpServer.listen(port, () => {
     logger.info(`Website đang chạy trên cổng ${port}`);
   });
 };

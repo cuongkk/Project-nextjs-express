@@ -15,6 +15,7 @@ const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const city_model_1 = __importDefault(require("../city/city.model"));
 const register = async (req) => {
     const { email, password, role } = req.body;
+    const normalizedRole = role === "candidate" ? "user" : role === "employer" ? "company" : role;
     const existUser = await user_model_1.default.findOne({ email });
     const existCompany = await company_model_1.default.findOne({ email });
     if (existUser || existCompany) {
@@ -24,7 +25,7 @@ const register = async (req) => {
         };
     }
     const hashedPassword = await (0, password_util_1.hashPassword)(password);
-    if (role === "company") {
+    if (normalizedRole === "company") {
         const newCompany = new company_model_1.default({
             email,
             password: hashedPassword,
@@ -36,6 +37,7 @@ const register = async (req) => {
         const newUser = new user_model_1.default({
             email,
             password: hashedPassword,
+            role: "candidate",
             ...req.body,
         });
         await newUser.save();
@@ -320,6 +322,8 @@ const me = async (userPayload, account) => {
             data: {
                 code: "success",
                 infoUser: {
+                    id: raw._id?.toString?.() || raw.id,
+                    name: raw.fullName || raw.name,
                     fullName: raw.fullName,
                     email: raw.email,
                     phone: raw.phone,
@@ -352,6 +356,7 @@ const me = async (userPayload, account) => {
                 code: "success",
                 infoUser: null,
                 infoCompany: {
+                    id: raw._id?.toString?.() || raw.id,
                     companyName: raw.companyName,
                     logo: raw.logo,
                     city: city,

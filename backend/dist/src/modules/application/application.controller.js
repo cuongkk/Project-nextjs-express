@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.removeByUser = exports.companyChangeStatus = exports.detail = exports.list = exports.apply = void 0;
+exports.removeByUser = exports.companySetInterviewDate = exports.companyChangeStatus = exports.detail = exports.list = exports.apply = void 0;
 const applicationService = __importStar(require("./application.service"));
 const apply = async (req, res) => {
     try {
@@ -94,6 +94,16 @@ const companyChangeStatus = async (req, res) => {
     }
 };
 exports.companyChangeStatus = companyChangeStatus;
+const companySetInterviewDate = async (req, res) => {
+    try {
+        const result = await applicationService.companySetInterviewDate(req);
+        res.json(result);
+    }
+    catch (error) {
+        res.json({ code: "error", message: "Thất bại!" });
+    }
+};
+exports.companySetInterviewDate = companySetInterviewDate;
 const removeByUser = async (req, res) => {
     try {
         const result = await applicationService.removeByUser(req);

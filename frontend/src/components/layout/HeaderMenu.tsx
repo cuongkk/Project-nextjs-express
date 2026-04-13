@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { FaAngleDown } from "react-icons/fa6";
+import { useMenuData } from "@/hooks/useApiData";
 
 type MenuItem = {
   label: string;
@@ -18,6 +19,7 @@ type MenuSection = {
 type MenuListProps = {
   sections: MenuSection[];
 };
+
 const buildSearchHref = (query: Record<string, string>) => {
   const params = new URLSearchParams();
   Object.entries(query).forEach(([key, value]) => {
@@ -74,52 +76,39 @@ const MenuList = ({ sections, onClose }: MenuListProps & { onClose?: () => void 
 
 export const HeaderMenu = (props: { showMenu: boolean; onClose: () => void }) => {
   const { showMenu, onClose } = props;
+  const { techList, listCity, companies, title, isLoading } = useMenuData();
   const [sections, setSections] = useState<MenuSection[]>([]);
 
   useEffect(() => {
-    const fetchMenuData = async () => {
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs/all`, {
-          method: "GET",
-          credentials: "include",
-        });
+    if (isLoading || !techList.length) return;
 
-        const data = await res.json();
+    const skills: MenuItem[] = techList.map((tech: string) => ({
+      label: tech,
+      query: { technologies: tech },
+    }));
 
-        if (data.code !== "success") return;
+    const cities: MenuItem[] = listCity.map((city: { name: string }) => ({
+      label: city.name,
+      query: { city: city.name },
+    }));
 
-        const skills: MenuItem[] = (data.techList || []).map((tech: string) => ({
-          label: tech,
-          query: { technologies: tech },
-        }));
+    const companyItems: MenuItem[] = companies.map((company: { companyName: string }) => ({
+      label: company.companyName,
+      query: { company: company.companyName },
+    }));
 
-        const cities: MenuItem[] = (data.listCity || []).map((city: { name: string }) => ({
-          label: city.name,
-          query: { city: city.name },
-        }));
+    const titleItems: MenuItem[] = title.map((t: string) => ({
+      label: t.charAt(0).toUpperCase() + t.slice(1),
+      query: { title: t },
+    }));
 
-        const companies: MenuItem[] = (data.companies || []).map((company: { companyName: string }) => ({
-          label: company.companyName,
-          query: { company: company.companyName },
-        }));
-
-        const title: MenuItem[] = (data.title || []).map((title: string) => ({
-          label: title.charAt(0).toUpperCase() + title.slice(1),
-          query: { title: title },
-        }));
-        setSections([
-          { key: "skills", name: "Công việc theo kĩ năng", items: skills },
-          { key: "cities", name: "Công việc theo thành phố", items: cities },
-          { key: "companies", name: "Công việc theo công ty", items: companies },
-          { key: "titles", name: "Công việc theo chuyên môn", items: title },
-        ]);
-      } catch (error) {
-        // ignore
-      }
-    };
-
-    fetchMenuData();
-  }, []);
+    setSections([
+      { key: "skills", name: "Công việc theo kĩ năng", items: skills },
+      { key: "cities", name: "Công việc theo thành phố", items: cities },
+      { key: "companies", name: "Công việc theo công ty", items: companyItems },
+      { key: "titles", name: "Công việc theo chuyên môn", items: titleItems },
+    ]);
+  }, [techList, listCity, companies, title, isLoading]);
 
   return (
     <>

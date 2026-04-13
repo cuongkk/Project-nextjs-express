@@ -14,13 +14,13 @@ const search = async (query) => {
     let totalRecord = 0;
     let totalPage = 1;
     const find = {};
-    if (query.language || query.technologies) {
-        const tech = query.language || query.technologies;
+    if (query.language || query.technologies || query.techStack) {
+        const tech = query.language || query.technologies || query.techStack;
         if (Array.isArray(tech)) {
-            find.technologies = { $in: tech };
+            find.$or = [{ technologies: { $in: tech } }, { techStack: { $in: tech } }];
         }
         else {
-            find.technologies = tech;
+            find.$or = [{ technologies: tech }, { techStack: tech }];
         }
     }
     if (query.city) {
@@ -50,10 +50,11 @@ const search = async (query) => {
         find.title = keywordRegex;
     }
     if (query.position) {
-        find.position = query.position;
+        find.$and = [...(find.$and || []), { $or: [{ position: query.position }, { level: query.position }] }];
     }
-    if (query.workingForm) {
-        find.workingForm = query.workingForm;
+    if (query.workingForm || query.type) {
+        const type = query.workingForm || query.type;
+        find.$and = [...(find.$and || []), { $or: [{ workingForm: type }, { type }] }];
     }
     // Lọc theo khoảng lương nếu có
     const salaryMin = query.salaryMin ? Number(query.salaryMin) : undefined;
@@ -71,8 +72,8 @@ const search = async (query) => {
     }
     // Chỉ tìm các job còn hiệu lực (đang active và chưa hết hạn)
     const now = new Date();
-    find.status = "active";
-    find.$or = [{ expiresAt: { $exists: false } }, { expiresAt: { $gte: now } }];
+    find.status = { $in: ["active", "open"] };
+    find.$and = [...(find.$and || []), { $or: [{ expiresAt: { $exists: false } }, { expiresAt: { $gte: now } }] }];
     const limitItems = variable_config_1.PAGINATION.SEARCH_JOB_PAGE_SIZE;
     let page = 1;
     if (query.page) {
@@ -96,9 +97,9 @@ const search = async (query) => {
             salaryMin: item.salaryMin,
             salaryMax: item.salaryMax,
             position: item.position,
-            workingForm: item.workingForm,
+            workingForm: item.workingForm || item.type,
             companyCity: "",
-            technologies: item.technologies,
+            technologies: item.techStack || item.technologies || [],
         };
         const companyInfo = await company_model_1.default.findOne({
             _id: item.companyId,

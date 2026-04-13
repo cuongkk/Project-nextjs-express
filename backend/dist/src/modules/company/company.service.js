@@ -179,34 +179,44 @@ const list = async (req) => {
     const totalRecord = await company_model_1.default.countDocuments(find);
     const totalPage = Math.ceil(totalRecord / limitItems);
     const skip = (page - 1) * limitItems;
-    const companyList = await company_model_1.default.find(find)
-        .sort({
-        createdAt: "desc",
-    })
-        .limit(limitItems)
-        .skip(skip);
-    const companyListFinal = [];
-    for (const item of companyList) {
-        const dataItemFinal = {
-            id: item.id,
-            logo: item.logo,
-            companyName: item.companyName,
-            cityName: "",
-            totalJob: 0,
-        };
-        const city = await city_model_1.default.findOne({
-            _id: item.city,
-        });
-        dataItemFinal.cityName = `${city?.name}`;
-        const now = new Date();
-        const totalJob = await job_model_1.default.countDocuments({
-            companyId: item.id,
-            status: "active",
-            $or: [{ expiresAt: { $exists: false } }, { expiresAt: { $gte: now } }],
-        });
-        dataItemFinal.totalJob = totalJob;
-        companyListFinal.push(dataItemFinal);
-    }
+    // 1. Lấy company
+    const companyList = await company_model_1.default.find(find).sort({ createdAt: -1 }).limit(limitItems).skip(skip);
+    // 2. Lấy tất cả city liên quan
+    const cityIds = companyList.map((c) => c.city);
+    const cities = await city_model_1.default.find({ _id: { $in: cityIds } });
+    const cityMap = new Map();
+    cities.forEach((c) => {
+        cityMap.set(c._id.toString(), c.name);
+    });
+    // 3. Group job count
+    const now = new Date();
+    const jobCounts = await job_model_1.default.aggregate([
+        {
+            $match: {
+                companyId: { $in: companyList.map((c) => c.id) },
+                status: "active",
+                $or: [{ expiresAt: { $exists: false } }, { expiresAt: { $gte: now } }],
+            },
+        },
+        {
+            $group: {
+                _id: "$companyId",
+                total: { $sum: 1 },
+            },
+        },
+    ]);
+    const jobMap = new Map();
+    jobCounts.forEach((j) => {
+        jobMap.set(j._id.toString(), j.total);
+    });
+    // 4. Build result
+    const companyListFinal = companyList.map((item) => ({
+        id: item.id,
+        logo: item.logo,
+        companyName: item.companyName,
+        cityName: cityMap.get(item.city?.toString()) || "",
+        totalJob: jobMap.get(item.id.toString()) || 0,
+    }));
     return {
         code: "success",
         message: "Thành công!",

@@ -2,9 +2,15 @@ import mongoose from "mongoose";
 
 const schema = new mongoose.Schema(
   {
+    name: String,
     fullName: String,
     email: String,
     password: String,
+    role: {
+      type: String,
+      enum: ["candidate", "employer", "user", "company"],
+      default: "candidate",
+    },
     avatar: String,
   },
   {

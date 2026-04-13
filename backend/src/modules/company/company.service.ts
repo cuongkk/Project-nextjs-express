@@ -211,39 +211,49 @@ export const list = async (req: Request) => {
   const totalPage = Math.ceil(totalRecord / limitItems);
   const skip = (page - 1) * limitItems;
 
-  const companyList = await AccountCompany.find(find)
-    .sort({
-      createdAt: "desc",
-    })
-    .limit(limitItems)
-    .skip(skip);
+  // 1. Lấy company
+  const companyList = await AccountCompany.find(find).sort({ createdAt: -1 }).limit(limitItems).skip(skip);
 
-  const companyListFinal: any[] = [];
+  // 2. Lấy tất cả city liên quan
+  const cityIds = companyList.map((c) => c.city);
+  const cities = await City.find({ _id: { $in: cityIds } });
 
-  for (const item of companyList) {
-    const dataItemFinal: any = {
-      id: item.id,
-      logo: item.logo,
-      companyName: item.companyName,
-      cityName: "",
-      totalJob: 0,
-    };
+  const cityMap = new Map();
+  cities.forEach((c) => {
+    cityMap.set(c._id.toString(), c.name);
+  });
 
-    const city = await City.findOne({
-      _id: item.city,
-    });
-    dataItemFinal.cityName = `${city?.name}`;
+  // 3. Group job count
+  const now = new Date();
+  const jobCounts = await Job.aggregate([
+    {
+      $match: {
+        companyId: { $in: companyList.map((c) => c.id) },
+        status: "active",
+        $or: [{ expiresAt: { $exists: false } }, { expiresAt: { $gte: now } }],
+      },
+    },
+    {
+      $group: {
+        _id: "$companyId",
+        total: { $sum: 1 },
+      },
+    },
+  ]);
 
-    const now = new Date();
-    const totalJob = await Job.countDocuments({
-      companyId: item.id,
-      status: "active",
-      $or: [{ expiresAt: { $exists: false } }, { expiresAt: { $gte: now } }],
-    });
-    dataItemFinal.totalJob = totalJob;
+  const jobMap = new Map();
+  jobCounts.forEach((j) => {
+    jobMap.set(j._id.toString(), j.total);
+  });
 
-    companyListFinal.push(dataItemFinal);
-  }
+  // 4. Build result
+  const companyListFinal = companyList.map((item) => ({
+    id: item.id,
+    logo: item.logo,
+    companyName: item.companyName,
+    cityName: cityMap.get(item.city?.toString()) || "",
+    totalJob: jobMap.get(item.id.toString()) || 0,
+  }));
 
   return {
     code: "success",

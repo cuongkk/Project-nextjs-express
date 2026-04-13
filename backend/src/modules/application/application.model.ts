@@ -3,14 +3,18 @@ import mongoose from "mongoose";
 const schema = new mongoose.Schema(
   {
     userId: String,
+    candidateId: String,
     companyId: String,
     jobId: String,
     cvId: String,
+    resumeUrl: String,
     status: {
       type: String,
-      enum: ["pending", "viewed", "rejected", "accepted"],
-      default: "pending",
+      enum: ["applied", "screening", "interview", "offer", "hired", "rejected", "pending", "viewed", "accepted"],
+      default: "applied",
     },
+    interviewDate: Date,
+    note: String,
     viewedByCompany: {
       type: Boolean,
       default: false,
@@ -19,6 +23,7 @@ const schema = new mongoose.Schema(
       {
         status: String,
         updatedAt: Date,
+        note: String,
       },
     ],
   },

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { usePathname } from "next/navigation";
 
 export type UserInfo = {
+  id?: string;
   fullName: string;
   email: string;
   phone?: string;
@@ -21,6 +22,7 @@ export type UserInfo = {
 };
 
 export type CompanyInfo = {
+  id?: string;
   companyName: string;
   logo?: string;
   city?: string;
@@ -46,7 +48,7 @@ export const useAuth = () => {
 
   const shouldFetch = !pathname.startsWith("/login") && !pathname.startsWith("/register") && !pathname.startsWith("/forgotpassword");
   const { data, error, isLoading, mutate } = useSWR(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, fetcher, {
-    revalidateOnFocus: false, 
+    revalidateOnFocus: false,
   });
 
   const isLogin = data?.code === "success";

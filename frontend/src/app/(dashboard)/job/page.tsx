@@ -17,7 +17,7 @@ export default function Page() {
   const [jobIdToDelete, setJobIdToDelete] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs/?page=${page}`, {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs/my?page=${page}`, {
       method: "GET",
       credentials: "include",
       cache: "no-store",

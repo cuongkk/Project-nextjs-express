@@ -13,8 +13,10 @@ export const register = async (req: Request) => {
   const { email, password, role } = req.body as {
     email: string;
     password: string;
-    role: "user" | "company" | "admin";
+    role: "user" | "company" | "admin" | "candidate" | "employer";
   };
+
+  const normalizedRole = role === "candidate" ? "user" : role === "employer" ? "company" : role;
 
   const existUser = await AccountUser.findOne({ email });
   const existCompany = await AccountCompany.findOne({ email });
@@ -28,7 +30,7 @@ export const register = async (req: Request) => {
 
   const hashedPassword = await hashPassword(password);
 
-  if (role === "company") {
+  if (normalizedRole === "company") {
     const newCompany = new AccountCompany({
       email,
       password: hashedPassword,
@@ -39,6 +41,7 @@ export const register = async (req: Request) => {
     const newUser = new AccountUser({
       email,
       password: hashedPassword,
+      role: "candidate",
       ...req.body,
     });
     await newUser.save();
@@ -388,6 +391,8 @@ export const me = async (userPayload: any, account: any) => {
       data: {
         code: "success",
         infoUser: {
+          id: raw._id?.toString?.() || raw.id,
+          name: raw.fullName || raw.name,
           fullName: raw.fullName,
           email: raw.email,
           phone: raw.phone,
@@ -422,6 +427,7 @@ export const me = async (userPayload: any, account: any) => {
         code: "success",
         infoUser: null,
         infoCompany: {
+          id: raw._id?.toString?.() || raw.id,
           companyName: raw.companyName,
           logo: raw.logo,
           city: city,

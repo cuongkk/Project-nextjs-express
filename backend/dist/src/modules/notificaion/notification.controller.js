@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.readAll = exports.count = exports.list = void 0;
+exports.readOne = exports.readAll = exports.count = exports.list = void 0;
 const notificationService = __importStar(require("./notification.service"));
 const list = async (req, res) => {
     try {
@@ -65,3 +65,14 @@ const readAll = async (req, res) => {
     }
 };
 exports.readAll = readAll;
+const readOne = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const result = await notificationService.markAsRead(req, id);
+        res.json(result);
+    }
+    catch (error) {
+        res.json({ code: "error", message: "Cập nhật thông báo thất bại!" });
+    }
+};
+exports.readOne = readOne;

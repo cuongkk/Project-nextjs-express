@@ -2,60 +2,37 @@
 "use client";
 import { cvStatusList } from "@/configs/variable";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FaCircleCheck } from "react-icons/fa6";
 /* eslint-disable @next/next/no-img-element */
 import { Pagination } from "@/components/ui/Pagination";
 import { toast } from "sonner";
+import { useCVList, type ApplicationItem } from "@/hooks/useApiData";
 
 interface CvListProps {
   role: "user" | "company";
   sortOrder: "newest" | "oldest";
-  statusFilter: "all" | "pending" | "viewed" | "accepted" | "rejected";
+  statusFilter: "all" | "applied" | "screening" | "interview" | "offer" | "hired" | "rejected";
   jobIdFilter?: string | null;
 }
 
 export const CvList = ({ role, sortOrder, statusFilter, jobIdFilter }: CvListProps) => {
-  const [listCV, setListCV] = useState<any[]>([]);
   const [page, setPage] = useState(1);
-  const [totalPage, setTotalPage] = useState(1);
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  useEffect(() => {
-    const params = new URLSearchParams();
-    params.set("page", `${page}`);
-    params.set("sort", sortOrder === "oldest" ? "oldest" : "newest");
-    if (statusFilter !== "all") {
-      params.set("status", statusFilter);
-    }
-
-    if (role === "company" && jobIdFilter && jobIdFilter !== "all") {
-      params.set("jobId", jobIdFilter);
-    }
-
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/applications?${params.toString()}`, {
-      method: "GET",
-      credentials: "include",
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.code === "success") {
-          setListCV(Array.isArray(data.applications) ? data.applications : []);
-          if (data.totalPage) {
-            setTotalPage(data.totalPage);
-          }
-        }
-        setIsLoaded(true);
-      });
-  }, [page, sortOrder, statusFilter, role, jobIdFilter]);
+  const { applications, totalPage, isLoading, mutate } = useCVList(page, sortOrder, statusFilter, jobIdFilter || undefined);
 
   const handlePagination = (value: number) => {
     setPage(value);
   };
 
-  const sortedList = [...listCV].sort((a, b) => {
-    const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-    const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+  const toTime = (value?: string) => {
+    if (!value) return 0;
+    const time = new Date(value).getTime();
+    return Number.isNaN(time) ? 0 : time;
+  };
+
+  const sortedList = [...applications].sort((a, b) => {
+    const aTime = toTime(a.createdAt);
+    const bTime = toTime(b.createdAt);
     return sortOrder === "newest" ? bTime - aTime : aTime - bTime;
   });
 
@@ -78,20 +55,24 @@ export const CvList = ({ role, sortOrder, statusFilter, jobIdFilter }: CvListPro
       }
 
       toast.success(data.message || "Đã xóa đơn ứng tuyển!");
-      setListCV((prev) => prev.filter((item) => item.id !== id));
+      mutate(); // Refresh the list
     } catch (error) {
       toast.error("Có lỗi xảy ra, vui lòng thử lại!");
     }
   };
 
+  if (isLoading) {
+    return <p>Đang tải dữ liệu...</p>;
+  }
+
   return (
     <>
-      {isLoaded && finalList.length === 0 ? (
+      {finalList.length === 0 ? (
         <p>Không có CV nào đã gửi.</p>
       ) : (
         <>
           <div className="grid lg:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-[20px]">
-            {finalList.map((item: any) => {
+            {finalList.map((item: ApplicationItem) => {
               const status = cvStatusList.find((itemStatus) => itemStatus.value === item.status);
 
               const companyName = item.companyName ?? "";
@@ -134,9 +115,17 @@ export const CvList = ({ role, sortOrder, statusFilter, jobIdFilter }: CvListPro
                     <FaCircleCheck className="text-[16px]" /> {status?.label}
                   </div>
                   <div className="flex flex-wrap items-center justify-center gap-[8px] mt-[12px] mb-[20px] mx-[10px]">
-                    <Link href={`cv/${item.id}`} className="bg-[#0088FF] rounded-[4px] font-[400] text-[14px] text-white inline-block py-[8px] px-[20px]">
+                    <Link href={`/cv/${item.id}`} className="bg-[#0088FF] rounded-[4px] font-[400] text-[14px] text-white inline-block py-[8px] px-[20px]">
                       Xem
                     </Link>
+                    {role === "company" && item.userId && item.jobId && (
+                      <Link
+                        href={`/chat?jobId=${encodeURIComponent(item.jobId)}&userId=${encodeURIComponent(item.userId)}`}
+                        className="bg-[#111827] rounded-[4px] font-[400] text-[14px] text-white inline-block py-[8px] px-[20px]"
+                      >
+                        Chat
+                      </Link>
+                    )}
                     {item.status === "rejected" && (
                       <button type="button" onClick={() => handleDelete(item.id)} className="bg-[#FF0000] rounded-[4px] font-[400] text-[14px] text-white inline-block py-[8px] px-[20px]">
                         Xóa
