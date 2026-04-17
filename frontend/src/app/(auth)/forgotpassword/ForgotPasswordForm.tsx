@@ -46,7 +46,7 @@ export const ForgotPasswordForm = () => {
 
   const handleVerifyEmail = (data: any) => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/verify-email`, {
-      method: "POST", // ✅ FIX
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
       },

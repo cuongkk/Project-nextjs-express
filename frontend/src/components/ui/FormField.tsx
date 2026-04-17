@@ -11,12 +11,6 @@ interface FormFieldProps {
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement>, FormFieldProps {}
 
-/**
- * Reusable Input Component
- * - Consistent styling
- * - Validation error display
- * - Responsive sizing
- */
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(({ label, error, helperText, required, className = "", ...props }, ref) => {
   return (
     <div className="w-full">
