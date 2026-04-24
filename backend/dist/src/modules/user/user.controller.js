@@ -35,14 +35,15 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.profilePatch = void 0;
 const userService = __importStar(require("./user.service"));
+const logger_1 = require("../../utils/logger");
 const profilePatch = async (req, res) => {
     try {
         const result = await userService.profilePatch(req);
         res.json(result);
     }
     catch (error) {
-        console.log(error);
-        res.json({
+        logger_1.logger.error("User profile update failed", error);
+        res.status(500).json({
             code: "error",
             message: "Cập nhật không thành công!",
         });

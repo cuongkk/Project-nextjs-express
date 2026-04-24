@@ -1,14 +1,24 @@
 import { Request, Response } from "express";
 import * as authService from "./auth.service";
 import { AccountRequest } from "../../interfaces/request.interface";
+import { logger } from "../../utils/logger";
+
+const buildAuthCookieOptions = () => {
+  const isProduction = process.env.NODE_ENV === "production";
+  return {
+    httpOnly: true,
+    sameSite: isProduction ? ("none" as const) : ("lax" as const),
+    secure: isProduction,
+  };
+};
 
 export const register = async (req: Request, res: Response) => {
   try {
     const result = await authService.register(req);
     res.json(result as any);
   } catch (error) {
-    console.log(error);
-    res.json({
+    logger.error("Register failed", error);
+    res.status(500).json({
       code: "error",
       message: "Đăng ký không thành công!",
     });
@@ -21,18 +31,15 @@ export const login = async (req: Request, res: Response) => {
 
     if ((result as any).tokens) {
       const { accessToken, refreshToken, isRemember } = (result as any).tokens;
+      const baseCookieOptions = buildAuthCookieOptions();
 
       res.cookie("accessToken", accessToken, {
         maxAge: 15 * 60 * 1000,
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
+        ...baseCookieOptions,
       });
 
       const refreshCookieOptions: any = {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
+        ...baseCookieOptions,
       };
 
       if (isRemember) {
@@ -62,8 +69,8 @@ export const login = async (req: Request, res: Response) => {
       infoCompany,
     });
   } catch (error) {
-    console.log(error);
-    res.json({
+    logger.error("Login failed", error);
+    res.status(500).json({
       code: "error",
       message: "Đăng nhập không thành công!",
     });
@@ -76,18 +83,15 @@ export const refreshToken = async (req: Request, res: Response) => {
 
     if ((result as any).tokens) {
       const { accessToken, refreshToken } = (result as any).tokens;
+      const baseCookieOptions = buildAuthCookieOptions();
 
       res.cookie("accessToken", accessToken, {
         maxAge: 15 * 60 * 1000,
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
+        ...baseCookieOptions,
       });
 
       const refreshCookieOptions: any = {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
+        ...baseCookieOptions,
       };
 
       res.cookie("refreshToken", refreshToken, refreshCookieOptions);
@@ -95,8 +99,8 @@ export const refreshToken = async (req: Request, res: Response) => {
 
     res.json(result as any);
   } catch (error) {
-    console.log(error);
-    res.json({
+    logger.error("Refresh token failed", error);
+    res.status(500).json({
       code: "error",
       message: "Làm mới token không thành công!",
     });
@@ -108,8 +112,8 @@ export const forgotPassword = async (req: Request, res: Response) => {
     const result = await authService.forgotPassword(req);
     res.json(result as any);
   } catch (error) {
-    console.log(error);
-    res.json({
+    logger.error("Forgot password failed", error);
+    res.status(500).json({
       code: "error",
       message: "Gửi OTP không thành công!",
     });
@@ -121,8 +125,8 @@ export const verifyEmail = async (req: Request, res: Response) => {
     const result = await authService.verifyEmail(req);
     res.json(result as any);
   } catch (error) {
-    console.log(error);
-    res.json({
+    logger.error("Verify email failed", error);
+    res.status(500).json({
       code: "error",
       message: "Xác thực email không thành công!",
     });
@@ -134,8 +138,8 @@ export const resetPassword = async (req: Request, res: Response) => {
     const result = await authService.resetPassword(req);
     res.json(result as any);
   } catch (error) {
-    console.log(error);
-    res.json({
+    logger.error("Reset password failed", error);
+    res.status(500).json({
       code: "error",
       message: "Đặt lại mật khẩu không thành công!",
     });
@@ -145,14 +149,16 @@ export const resetPassword = async (req: Request, res: Response) => {
 export const logout = async (req: Request, res: Response) => {
   try {
     const result = await authService.logout(req);
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
+    const cookieOptions = buildAuthCookieOptions();
+    res.clearCookie("accessToken", cookieOptions);
+    res.clearCookie("refreshToken", cookieOptions);
     res.json(result as any);
   } catch (error) {
-    console.log(error);
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
-    res.json({
+    logger.error("Logout failed", error);
+    const cookieOptions = buildAuthCookieOptions();
+    res.clearCookie("accessToken", cookieOptions);
+    res.clearCookie("refreshToken", cookieOptions);
+    res.status(500).json({
       code: "error",
       message: "Đăng xuất không thành công!",
     });
@@ -164,8 +170,8 @@ export const changePassword = async (req: AccountRequest, res: Response) => {
     const result = await authService.changePasswordPatch(req);
     res.json(result);
   } catch (error) {
-    console.log(error);
-    res.json({
+    logger.error("Change password failed", error);
+    res.status(500).json({
       code: "error",
       message: "Đổi mật khẩu không thành công!",
     });
@@ -181,7 +187,7 @@ export const me = async (req: any, res: Response) => {
 
     return res.status(result.status).json(result.data);
   } catch (error) {
-    console.log(error);
+    logger.error("Get current user failed", error);
     return res.status(500).json({
       code: "error",
       message: "Lấy thông tin đăng nhập không thành công!",

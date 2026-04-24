@@ -38,18 +38,9 @@ const authMiddleware = __importStar(require("../../middlewares/auth.middleware")
 const applicationValidate = __importStar(require("./application.validate"));
 const applicationController = __importStar(require("./application.controller"));
 const cloudinary_helper_1 = require("../../utils/cloudinary.helper");
+const upload_cloudinary_middleware_1 = require("../../middlewares/upload-cloudinary.middleware");
 const router = (0, express_1.Router)();
-router.post("/", authMiddleware.verifyTokenUser, cloudinary_helper_1.upload.single("fileCV"), async (req, res) => {
-    try {
-        const result = await (0, cloudinary_helper_1.uploadToCloudinary)(req.file.path);
-        res.json({
-            url: result.secure_url,
-        });
-    }
-    catch (err) {
-        res.status(500).json({ message: "Upload failed" });
-    }
-}, applicationValidate.applyPost, applicationController.apply);
+router.post("/", authMiddleware.verifyTokenUser, cloudinary_helper_1.upload.single("fileCV"), upload_cloudinary_middleware_1.uploadCloudinaryMiddleware, applicationValidate.applyPost, applicationController.apply);
 router.get("/", authMiddleware.authenticate, applicationController.list);
 router.get("/:id", authMiddleware.authenticate, applicationController.detail);
 router.patch("/:id", authMiddleware.verifyTokenCompany, applicationValidate.companyChangeStatusPatch, applicationController.companyChangeStatus);

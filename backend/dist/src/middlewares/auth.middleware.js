@@ -41,6 +41,7 @@ const user_model_1 = __importDefault(require("../modules/user/user.model"));
 const company_model_1 = __importDefault(require("../modules/company/company.model"));
 const token_util_1 = require("../utils/token.util");
 const authService = __importStar(require("../modules/auth/auth.service"));
+const logger_1 = require("../utils/logger");
 const getTokenFromRequest = (req) => {
     const authHeader = req.headers["authorization"];
     if (authHeader && typeof authHeader === "string" && authHeader.startsWith("Bearer ")) {
@@ -64,16 +65,18 @@ const authenticate = async (req, res, next) => {
                 return;
             }
             const { accessToken, refreshToken } = refreshResult.tokens;
+            const isProduction = process.env.NODE_ENV === "production";
+            const cookieOptions = {
+                httpOnly: true,
+                sameSite: isProduction ? "none" : "lax",
+                secure: isProduction,
+            };
             res.cookie("accessToken", accessToken, {
                 maxAge: 15 * 60 * 1000,
-                httpOnly: true,
-                sameSite: "lax",
-                secure: process.env.NODE_ENV === "production",
+                ...cookieOptions,
             });
             const refreshCookieOptions = {
-                httpOnly: true,
-                sameSite: "lax",
-                secure: process.env.NODE_ENV === "production",
+                ...cookieOptions,
             };
             res.cookie("refreshToken", refreshToken, refreshCookieOptions);
             token = accessToken;
@@ -99,6 +102,9 @@ const authenticate = async (req, res, next) => {
         next();
     }
     catch (error) {
+        logger_1.logger.warn("Authenticate middleware failed", {
+            requestId: res.locals.requestId,
+        });
         res.status(401).json({
             code: "error",
             message: "Token không hợp lệ!",

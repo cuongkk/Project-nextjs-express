@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendMail = void 0;
 const nodemailer_1 = __importDefault(require("nodemailer"));
+const logger_1 = require("./logger");
 const sendMail = async (email, subject, content) => {
     const transporter = nodemailer_1.default.createTransport({
         host: "smtp.gmail.com",
@@ -25,7 +26,10 @@ const sendMail = async (email, subject, content) => {
         await transporter.sendMail(mailOptions);
     }
     catch (error) {
-        console.log("Error sending email:", error);
+        logger_1.logger.error("Error sending email", error, {
+            recipient: email,
+            subject,
+        });
     }
 };
 exports.sendMail = sendMail;

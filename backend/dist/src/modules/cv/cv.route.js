@@ -37,30 +37,11 @@ const express_1 = require("express");
 const cloudinary_helper_1 = require("../../utils/cloudinary.helper");
 const authMiddleware = __importStar(require("../../middlewares/auth.middleware"));
 const cvController = __importStar(require("./cv.controller"));
+const upload_cloudinary_middleware_1 = require("../../middlewares/upload-cloudinary.middleware");
 const router = (0, express_1.Router)();
 router.get("/", authMiddleware.verifyTokenUser, cvController.listUser);
 router.get("/:id", authMiddleware.verifyTokenUser, cvController.detailUser);
-router.post("/", authMiddleware.verifyTokenUser, cloudinary_helper_1.upload.single("fileCV"), async (req, res) => {
-    try {
-        const result = await (0, cloudinary_helper_1.uploadToCloudinary)(req.file.path);
-        res.json({
-            url: result.secure_url,
-        });
-    }
-    catch (err) {
-        res.status(500).json({ message: "Upload failed" });
-    }
-}, cvController.create);
-router.patch("/:id", authMiddleware.verifyTokenUser, cloudinary_helper_1.upload.single("fileCV"), async (req, res) => {
-    try {
-        const result = await (0, cloudinary_helper_1.uploadToCloudinary)(req.file.path);
-        res.json({
-            url: result.secure_url,
-        });
-    }
-    catch (err) {
-        res.status(500).json({ message: "Upload failed" });
-    }
-}, cvController.update);
+router.post("/", authMiddleware.verifyTokenUser, cloudinary_helper_1.upload.single("fileCV"), upload_cloudinary_middleware_1.uploadCloudinaryMiddleware, cvController.create);
+router.patch("/:id", authMiddleware.verifyTokenUser, cloudinary_helper_1.upload.single("fileCV"), upload_cloudinary_middleware_1.uploadCloudinaryMiddleware, cvController.update);
 router.delete("/:id", authMiddleware.verifyTokenUser, cvController.remove);
 exports.default = router;

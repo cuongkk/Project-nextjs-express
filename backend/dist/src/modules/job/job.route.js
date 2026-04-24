@@ -38,6 +38,7 @@ const jobController = __importStar(require("./job.controller"));
 const jobValidate = __importStar(require("./job.validate"));
 const authMiddleware = __importStar(require("../../middlewares/auth.middleware"));
 const cloudinary_helper_1 = require("../../utils/cloudinary.helper");
+const upload_cloudinary_middleware_1 = require("../../middlewares/upload-cloudinary.middleware");
 const router = (0, express_1.Router)();
 // JOBS
 router.get("/all", jobController.all);
@@ -46,27 +47,7 @@ router.get("/my", authMiddleware.verifyTokenCompany, jobController.list);
 router.get("/recommend", authMiddleware.verifyTokenUser, jobController.recommend);
 router.get("/", jobController.publicList);
 router.get("/:id", jobController.detail);
-router.post("/", authMiddleware.verifyTokenCompany, cloudinary_helper_1.upload.array("images", 8), async (req, res) => {
-    try {
-        const result = await (0, cloudinary_helper_1.uploadToCloudinary)(req.file.path);
-        res.json({
-            url: result.secure_url,
-        });
-    }
-    catch (err) {
-        res.status(500).json({ message: "Upload failed" });
-    }
-}, jobValidate.createPost, jobController.create);
-router.patch("/:id", authMiddleware.verifyTokenCompany, cloudinary_helper_1.upload.array("images", 8), async (req, res) => {
-    try {
-        const result = await (0, cloudinary_helper_1.uploadToCloudinary)(req.file.path);
-        res.json({
-            url: result.secure_url,
-        });
-    }
-    catch (err) {
-        res.status(500).json({ message: "Upload failed" });
-    }
-}, jobValidate.editPatch, jobController.update);
+router.post("/", authMiddleware.verifyTokenCompany, cloudinary_helper_1.upload.array("images", 8), upload_cloudinary_middleware_1.uploadCloudinaryMiddleware, jobValidate.createPost, jobController.create);
+router.patch("/:id", authMiddleware.verifyTokenCompany, cloudinary_helper_1.upload.array("images", 8), upload_cloudinary_middleware_1.uploadCloudinaryMiddleware, jobValidate.editPatch, jobController.update);
 router.delete("/:id", authMiddleware.verifyTokenCompany, jobController.remove);
 exports.default = router;

@@ -3,28 +3,12 @@ import * as authMiddleware from "../../middlewares/auth.middleware";
 import * as applicationValidate from "./application.validate";
 import * as applicationController from "./application.controller";
 
-import { upload, uploadToCloudinary } from "../../utils/cloudinary.helper";
+import { upload } from "../../utils/cloudinary.helper";
+import { uploadCloudinaryMiddleware } from "../../middlewares/upload-cloudinary.middleware";
 
 const router = Router();
 
-router.post(
-  "/",
-  authMiddleware.verifyTokenUser,
-  upload.single("fileCV"),
-  async (req, res) => {
-    try {
-      const result = await uploadToCloudinary(req.file!.path);
-
-      res.json({
-        url: result.secure_url,
-      });
-    } catch (err) {
-      res.status(500).json({ message: "Upload failed" });
-    }
-  },
-  applicationValidate.applyPost,
-  applicationController.apply,
-);
+router.post("/", authMiddleware.verifyTokenUser, upload.single("fileCV"), uploadCloudinaryMiddleware, applicationValidate.applyPost, applicationController.apply);
 
 router.get("/", authMiddleware.authenticate, applicationController.list);
 

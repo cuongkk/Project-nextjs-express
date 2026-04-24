@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { io, type Socket } from "socket.io-client";
 import { apiRequest } from "@/utils/api";
@@ -28,7 +29,7 @@ type MessageItem = {
   createdAt: string;
 };
 
-export default function ChatPage() {
+function ChatPageContent() {
   usePageTitle("Chat");
 
   const router = useRouter();
@@ -138,9 +139,7 @@ export default function ChatPage() {
       if (!convId || !msg) return;
       if (sentMessageIdsRef.current.has(msg._id)) return;
 
-      setConversations((prev) =>
-        prev.map((c) => (c.id === convId ? { ...c, lastMessage: msg.content, lastMessageAt: msg.createdAt } : c)),
-      );
+      setConversations((prev) => prev.map((c) => (c.id === convId ? { ...c, lastMessage: msg.content, lastMessageAt: msg.createdAt } : c)));
 
       if (convId === activeId) {
         setMessages((prev) => [...prev, msg]);
@@ -169,9 +168,7 @@ export default function ChatPage() {
       const messageDoc = (res as any).messageDoc as MessageItem;
       sentMessageIdsRef.current.add(messageDoc._id);
       setMessages((prev) => [...prev, messageDoc]);
-      setConversations((prev) =>
-        prev.map((c) => (c.id === activeId ? { ...c, lastMessage: messageDoc.content, lastMessageAt: messageDoc.createdAt } : c)),
-      );
+      setConversations((prev) => prev.map((c) => (c.id === activeId ? { ...c, lastMessage: messageDoc.content, lastMessageAt: messageDoc.createdAt } : c)));
     }
   };
 
@@ -203,25 +200,25 @@ export default function ChatPage() {
         <div className={`grid grid-cols-1 ${isDirectMode ? "" : "lg:grid-cols-3"} gap-[16px]`}>
           {!isDirectMode && (
             <div className="border border-[#DEDEDE] rounded-[8px] overflow-hidden">
-            <div className="px-3 py-2 border-b font-[700]">Conversations</div>
-            <div className="max-h-[70vh] overflow-y-auto">
-              {conversations.length === 0 ? (
-                <div className="px-3 py-3 text-[13px] text-gray-500">Chưa có cuộc trò chuyện.</div>
-              ) : (
-                conversations.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => setActiveId(c.id)}
-                    className={`w-full text-left px-3 py-2 border-b last:border-b-0 ${activeId === c.id ? "bg-[#EEF2FF]" : "bg-white"}`}
-                  >
-                    <div className="font-[700] text-[14px] line-clamp-1">{c.jobTitle || "Job"}</div>
-                    <div className="text-[12px] text-gray-600 line-clamp-1">{c.companyName || c.otherParticipantName || ""}</div>
-                    <div className="text-[12px] text-gray-500 line-clamp-1">{c.lastMessage || ""}</div>
-                  </button>
-                ))
-              )}
-            </div>
+              <div className="px-3 py-2 border-b font-[700]">Conversations</div>
+              <div className="max-h-[70vh] overflow-y-auto">
+                {conversations.length === 0 ? (
+                  <div className="px-3 py-3 text-[13px] text-gray-500">Chưa có cuộc trò chuyện.</div>
+                ) : (
+                  conversations.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => setActiveId(c.id)}
+                      className={`w-full text-left px-3 py-2 border-b last:border-b-0 ${activeId === c.id ? "bg-[#EEF2FF]" : "bg-white"}`}
+                    >
+                      <div className="font-[700] text-[14px] line-clamp-1">{c.jobTitle || "Job"}</div>
+                      <div className="text-[12px] text-gray-600 line-clamp-1">{c.companyName || c.otherParticipantName || ""}</div>
+                      <div className="text-[12px] text-gray-500 line-clamp-1">{c.lastMessage || ""}</div>
+                    </button>
+                  ))
+                )}
+              </div>
             </div>
           )}
 
@@ -271,3 +268,16 @@ export default function ChatPage() {
   );
 }
 
+export default function ChatPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="py-[40px]">
+          <div className="contain">Đang tải chat...</div>
+        </div>
+      }
+    >
+      <ChatPageContent />
+    </Suspense>
+  );
+}

@@ -36,27 +36,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const uploadController = __importStar(require("./upload.controller"));
 const cloudinary_helper_1 = require("../../utils/cloudinary.helper");
+const upload_cloudinary_middleware_1 = require("../../middlewares/upload-cloudinary.middleware");
 const router = (0, express_1.Router)();
-router.post("/", cloudinary_helper_1.upload.single("file"), async (req, res) => {
-    try {
-        const result = await (0, cloudinary_helper_1.uploadToCloudinary)(req.file.path);
-        res.json({
-            url: result.secure_url,
-        });
-    }
-    catch (err) {
-        res.status(500).json({ message: "Upload failed" });
-    }
-}, uploadController.imagePost);
-router.post("/images", cloudinary_helper_1.upload.single("file"), async (req, res) => {
-    try {
-        const result = await (0, cloudinary_helper_1.uploadToCloudinary)(req.file.path);
-        res.json({
-            url: result.secure_url,
-        });
-    }
-    catch (err) {
-        res.status(500).json({ message: "Upload failed" });
-    }
-}, uploadController.imagePost);
+router.post("/", cloudinary_helper_1.upload.single("file"), upload_cloudinary_middleware_1.uploadCloudinaryMiddleware, uploadController.imagePost);
+router.post("/images", cloudinary_helper_1.upload.single("file"), upload_cloudinary_middleware_1.uploadCloudinaryMiddleware, uploadController.imagePost);
 exports.default = router;

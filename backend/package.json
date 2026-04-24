@@ -6,8 +6,11 @@
   "scripts": {
     "start": "node dist/index.js",
     "dev": "nodemon --watch . --ext ts,js --exec ts-node index.ts",
+    "lint": "tsc --noEmit",
     "build": "tsc",
-    "seed": "npx ts-node seed.ts"
+    "seed": "npx ts-node seed.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -32,8 +35,11 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^1.4.7",
     "@types/node": "^20.0.0",
+    "@types/supertest": "^6.0.3",
     "nodemon": "^3.0.1",
+    "supertest": "^7.1.4",
     "ts-node": "^10.9.2",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "vitest": "^2.1.9"
   }
 }

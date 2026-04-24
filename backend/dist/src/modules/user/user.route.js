@@ -38,16 +38,7 @@ const userController = __importStar(require("./user.controller"));
 const userValidate = __importStar(require("./user.validate"));
 const authMiddleware = __importStar(require("../../middlewares/auth.middleware"));
 const cloudinary_helper_1 = require("../../utils/cloudinary.helper");
+const upload_cloudinary_middleware_1 = require("../../middlewares/upload-cloudinary.middleware");
 const router = (0, express_1.Router)();
-router.patch("/profile", authMiddleware.verifyTokenUser, cloudinary_helper_1.upload.single("avatar"), async (req, res) => {
-    try {
-        const result = await (0, cloudinary_helper_1.uploadToCloudinary)(req.file.path);
-        res.json({
-            url: result.secure_url,
-        });
-    }
-    catch (err) {
-        res.status(500).json({ message: "Upload failed" });
-    }
-}, userValidate.profilePatch, userController.profilePatch);
+router.patch("/profile", authMiddleware.verifyTokenUser, cloudinary_helper_1.upload.single("avatar"), upload_cloudinary_middleware_1.uploadCloudinaryMiddleware, userValidate.profilePatch, userController.profilePatch);
 exports.default = router;

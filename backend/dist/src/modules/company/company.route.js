@@ -38,18 +38,9 @@ const companyController = __importStar(require("./company.controller"));
 const companyValidate = __importStar(require("./company.validate"));
 const authMiddleware = __importStar(require("../../middlewares/auth.middleware"));
 const cloudinary_helper_1 = require("../../utils/cloudinary.helper");
+const upload_cloudinary_middleware_1 = require("../../middlewares/upload-cloudinary.middleware");
 const router = (0, express_1.Router)();
-router.patch("/profile", authMiddleware.verifyTokenCompany, cloudinary_helper_1.upload.single("logo"), async (req, res) => {
-    try {
-        const result = await (0, cloudinary_helper_1.uploadToCloudinary)(req.file.path);
-        res.json({
-            url: result.secure_url,
-        });
-    }
-    catch (err) {
-        res.status(500).json({ message: "Upload failed" });
-    }
-}, companyValidate.profilePatch, companyController.profilePatch);
+router.patch("/profile", authMiddleware.verifyTokenCompany, cloudinary_helper_1.upload.single("logo"), upload_cloudinary_middleware_1.uploadCloudinaryMiddleware, companyValidate.profilePatch, companyController.profilePatch);
 router.get("/", companyController.list);
 router.get("/:id", companyController.detail);
 exports.default = router;

@@ -2,7 +2,8 @@ import { Router } from "express";
 import * as jobController from "./job.controller";
 import * as jobValidate from "./job.validate";
 import * as authMiddleware from "../../middlewares/auth.middleware";
-import { upload, uploadToCloudinary } from "../../utils/cloudinary.helper";
+import { upload } from "../../utils/cloudinary.helper";
+import { uploadCloudinaryMiddleware } from "../../middlewares/upload-cloudinary.middleware";
 
 const router = Router();
 
@@ -18,43 +19,9 @@ router.get("/", jobController.publicList);
 
 router.get("/:id", jobController.detail);
 
-router.post(
-  "/",
-  authMiddleware.verifyTokenCompany,
-  upload.array("images", 8),
-  async (req, res) => {
-    try {
-      const result = await uploadToCloudinary(req.file!.path);
+router.post("/", authMiddleware.verifyTokenCompany, upload.array("images", 8), uploadCloudinaryMiddleware, jobValidate.createPost, jobController.create);
 
-      res.json({
-        url: result.secure_url,
-      });
-    } catch (err) {
-      res.status(500).json({ message: "Upload failed" });
-    }
-  },
-  jobValidate.createPost,
-  jobController.create,
-);
-
-router.patch(
-  "/:id",
-  authMiddleware.verifyTokenCompany,
-  upload.array("images", 8),
-  async (req, res) => {
-    try {
-      const result = await uploadToCloudinary(req.file!.path);
-
-      res.json({
-        url: result.secure_url,
-      });
-    } catch (err) {
-      res.status(500).json({ message: "Upload failed" });
-    }
-  },
-  jobValidate.editPatch,
-  jobController.update,
-);
+router.patch("/:id", authMiddleware.verifyTokenCompany, upload.array("images", 8), uploadCloudinaryMiddleware, jobValidate.editPatch, jobController.update);
 
 router.delete("/:id", authMiddleware.verifyTokenCompany, jobController.remove);
 

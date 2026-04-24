@@ -1,14 +1,15 @@
 import { Request, Response } from "express";
 import { AccountRequest } from "../../interfaces/request.interface";
 import * as companyService from "./company.service";
+import { logger } from "../../utils/logger";
 
 export const profilePatch = async (req: AccountRequest, res: Response) => {
   try {
     const result = await companyService.profilePatch(req);
     res.json(result);
   } catch (error) {
-    console.log(error);
-    res.json({
+    logger.error("Company profile update failed", error);
+    res.status(500).json({
       code: "error",
       message: "Cập nhật không thành công!",
     });
@@ -20,8 +21,8 @@ export const createJobPost = async (req: AccountRequest, res: Response) => {
     const result = await companyService.createJobPost(req);
     res.json(result);
   } catch (error) {
-    console.log(error);
-    res.json({
+    logger.error("Company job create failed", error);
+    res.status(500).json({
       code: "error",
       message: "Dữ liệu không hợp lệ!",
     });
@@ -58,10 +59,10 @@ export const detail = async (req: Request, res: Response) => {
     const result = await companyService.detail(req);
     res.json(result);
   } catch (error) {
-    res.json({
+    logger.error("Company detail fetch failed", error);
+    res.status(500).json({
       code: "error",
       message: "Thất bại!",
     });
   }
 };
-

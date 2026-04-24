@@ -16,6 +16,7 @@ const saved_job_model_1 = __importDefault(require("./src/modules/user/saved-job.
 const notification_model_1 = __importDefault(require("./src/modules/notificaion/notification.model"));
 const city_model_1 = __importDefault(require("./src/modules/city/city.model"));
 const candidate_profile_model_1 = __importDefault(require("./src/modules/profile/candidate-profile.model"));
+const conversation_model_1 = __importDefault(require("./src/modules/chat/conversation.model"));
 const random = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const pickMany = (arr, min = 1, max = arr.length) => {
     const shuffled = [...arr];
@@ -184,6 +185,7 @@ const run = async () => {
             notification_model_1.default.deleteMany({}),
             city_model_1.default.deleteMany({}),
             candidate_profile_model_1.default.deleteMany({}),
+            conversation_model_1.default.deleteMany({}),
         ]);
         const hashedPassword = await bcryptjs_1.default.hash("Cc123456@", 10);
         // ===== City =====
@@ -294,10 +296,6 @@ const run = async () => {
                     const history = buildApplicationHistory(application.status);
                     application.set("history", history);
                     application.viewedByCompany = application.status !== "applied";
-                    if (application.status === "hired") {
-                        job.status = "closed";
-                        await job.save();
-                    }
                     await application.save();
                     await notification_model_1.default.create({
                         receiverId: user._id.toString(),

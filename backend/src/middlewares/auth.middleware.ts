@@ -4,6 +4,7 @@ import AccountCompany from "../modules/company/company.model";
 import { AccountRequest } from "../interfaces/request.interface";
 import { verifyAccessToken, JwtPayload } from "../utils/token.util";
 import * as authService from "../modules/auth/auth.service";
+import { logger } from "../utils/logger";
 
 declare module "express-serve-static-core" {
   interface Request {
@@ -38,18 +39,20 @@ export const authenticate = async (req: AccountRequest, res: Response, next: Nex
       }
 
       const { accessToken, refreshToken } = refreshResult.tokens as { accessToken: string; refreshToken: string };
+      const isProduction = process.env.NODE_ENV === "production";
+      const cookieOptions = {
+        httpOnly: true,
+        sameSite: isProduction ? ("none" as const) : ("lax" as const),
+        secure: isProduction,
+      };
 
       res.cookie("accessToken", accessToken, {
         maxAge: 15 * 60 * 1000,
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
+        ...cookieOptions,
       });
 
       const refreshCookieOptions: any = {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
+        ...cookieOptions,
       };
 
       res.cookie("refreshToken", refreshToken, refreshCookieOptions);
@@ -79,6 +82,9 @@ export const authenticate = async (req: AccountRequest, res: Response, next: Nex
 
     next();
   } catch (error) {
+    logger.warn("Authenticate middleware failed", {
+      requestId: res.locals.requestId,
+    });
     res.status(401).json({
       code: "error",
       message: "Token không hợp lệ!",

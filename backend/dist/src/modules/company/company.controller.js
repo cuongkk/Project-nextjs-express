@@ -35,14 +35,15 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.detail = exports.list = exports.deleteJobDel = exports.editJobPatch = exports.editJob = exports.listJob = exports.createJobPost = exports.profilePatch = void 0;
 const companyService = __importStar(require("./company.service"));
+const logger_1 = require("../../utils/logger");
 const profilePatch = async (req, res) => {
     try {
         const result = await companyService.profilePatch(req);
         res.json(result);
     }
     catch (error) {
-        console.log(error);
-        res.json({
+        logger_1.logger.error("Company profile update failed", error);
+        res.status(500).json({
             code: "error",
             message: "Cập nhật không thành công!",
         });
@@ -55,8 +56,8 @@ const createJobPost = async (req, res) => {
         res.json(result);
     }
     catch (error) {
-        console.log(error);
-        res.json({
+        logger_1.logger.error("Company job create failed", error);
+        res.status(500).json({
             code: "error",
             message: "Dữ liệu không hợp lệ!",
         });
@@ -94,7 +95,8 @@ const detail = async (req, res) => {
         res.json(result);
     }
     catch (error) {
-        res.json({
+        logger_1.logger.error("Company detail fetch failed", error);
+        res.status(500).json({
             code: "error",
             message: "Thất bại!",
         });
